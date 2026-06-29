@@ -483,7 +483,7 @@ class DbiMysqli implements DbiExtension
         }
 
         $cmd = sprintf(
-            'socat UNIX-LISTEN:%s,fork,reuseaddr %s & echo $!',
+            'socat UNIX-LISTEN:%s,fork,reuseaddr %s >/dev/null 2>&1 & echo $!',
             escapeshellarg($socketPath),
             escapeshellarg($socksAddr)
         );
@@ -537,6 +537,7 @@ class DbiMysqli implements DbiExtension
         $cmd = 'ssh -N -f'
             . ' -o ExitOnForwardFailure=yes'
             . ' -o StrictHostKeyChecking=accept-new'
+            . ' -o ConnectTimeout=10'
             . ' -o ServerAliveInterval=60'
             . ' -o ServerAliveCountMax=3';
         $cmd .= ' ' . $tunnelArgs;
