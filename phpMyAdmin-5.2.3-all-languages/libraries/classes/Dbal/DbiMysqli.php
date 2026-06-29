@@ -18,23 +18,24 @@ use function escapeshellarg;
 use function explode;
 use function fclose;
 use function file_exists;
+use function file_get_contents;
+use function file_put_contents;
 use function fsockopen;
-use function is_resource;
+use function implode;
+use function md5;
 use function mysqli_connect_errno;
 use function mysqli_connect_error;
 use function mysqli_get_client_info;
 use function mysqli_init;
 use function mysqli_report;
-use function proc_open;
-use function proc_terminate;
-use function register_shutdown_function;
+use function posix_kill;
+use function shell_exec;
 use function sprintf;
 use function stream_socket_get_name;
 use function stream_socket_server;
 use function stripos;
 use function sys_get_temp_dir;
 use function trigger_error;
-use function uniqid;
 use function unlink;
 use function usleep;
 
@@ -55,11 +56,6 @@ use const PHP_VERSION_ID;
  */
 class DbiMysqli implements DbiExtension
 {
-    /** @var array{proc: resource, socket: string}[] */
-    private static $socatProcesses = [];
-
-    /** @var bool */
-    private static $shutdownRegistered = false;
     /**
      * connects to the database server
      *
@@ -419,7 +415,28 @@ class DbiMysqli implements DbiExtension
     }
 
     /**
+     * Generate a stable tunnel identifier based on connection config.
+     */
+    private function tunnelId(string $prefix, array $parts): string
+    {
+        return $prefix . '_' . md5(implode('|', $parts));
+    }
+
+    /**
+     * Check if a process with the given PID is still alive.
+     */
+    private function isProcessAlive(int $pid): bool
+    {
+        if ($pid <= 0) {
+            return false;
+        }
+
+        return posix_kill($pid, 0);
+    }
+
+    /**
      * Start a socat SOCKS5 tunnel and return the local Unix socket path.
+     * Reuses an existing tunnel if one is already running for this config.
      *
      * @param array $server server connection parameters
      *
@@ -434,7 +451,20 @@ class DbiMysqli implements DbiExtension
         $mysqlHost = $server['host'];
         $mysqlPort = ! empty($server['port']) ? (int) $server['port'] : 3306;
 
-        $socketPath = sys_get_temp_dir() . '/pma_socks5_' . uniqid('', true) . '.sock';
+        $id = $this->tunnelId('pma_socks5', [$proxyHost, $proxyPort, $mysqlHost, (string) $mysqlPort]);
+        $socketPath = sys_get_temp_dir() . '/' . $id . '.sock';
+        $pidFile = sys_get_temp_dir() . '/' . $id . '.pid';
+
+        // Reuse existing tunnel
+        if (file_exists($socketPath) && file_exists($pidFile)) {
+            $pid = (int) file_get_contents($pidFile);
+            if ($this->isProcessAlive($pid)) {
+                return $socketPath;
+            }
+
+            @unlink($socketPath);
+            @unlink($pidFile);
+        }
 
         $socksAddr = sprintf(
             'SOCKS5-CONNECT:%s:%s:%d,socksport=%s',
@@ -453,20 +483,14 @@ class DbiMysqli implements DbiExtension
         }
 
         $cmd = sprintf(
-            'socat UNIX-LISTEN:%s,fork,reuseaddr %s',
+            'socat UNIX-LISTEN:%s,fork,reuseaddr %s & echo $!',
             escapeshellarg($socketPath),
             escapeshellarg($socksAddr)
         );
 
-        $descriptorspec = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
+        $pid = (int) trim((string) shell_exec($cmd));
 
-        $proc = proc_open($cmd, $descriptorspec, $pipes);
-
-        if (! is_resource($proc)) {
+        if ($pid <= 0) {
             trigger_error(
                 __('Failed to start socat for SOCKS5 proxy tunnel.'),
                 E_USER_WARNING
@@ -475,15 +499,17 @@ class DbiMysqli implements DbiExtension
             return false;
         }
 
-        // Wait for socket file to appear
+        file_put_contents($pidFile, (string) $pid);
+
         $waited = 0;
         while (! file_exists($socketPath) && $waited < 50) {
-            usleep(100000); // 100ms
+            usleep(100000);
             $waited++;
         }
 
         if (! file_exists($socketPath)) {
-            proc_terminate($proc);
+            posix_kill($pid, 15);
+            @unlink($pidFile);
             trigger_error(
                 __('Timeout waiting for socat SOCKS5 tunnel socket.'),
                 E_USER_WARNING
@@ -492,33 +518,12 @@ class DbiMysqli implements DbiExtension
             return false;
         }
 
-        self::$socatProcesses[] = ['proc' => $proc, 'socket' => $socketPath];
-
-        if (! self::$shutdownRegistered) {
-            register_shutdown_function([self::class, 'cleanupSocatProcesses']);
-            self::$shutdownRegistered = true;
-        }
-
         return $socketPath;
-    }
-
-    public static function cleanupSocatProcesses(): void
-    {
-        foreach (self::$socatProcesses as $entry) {
-            if (is_resource($entry['proc'])) {
-                proc_terminate($entry['proc']);
-            }
-
-            if (! empty($entry['socket']) && file_exists($entry['socket'])) {
-                @unlink($entry['socket']);
-            }
-        }
-
-        self::$socatProcesses = [];
     }
 
     /**
      * Build the SSH command string with authentication and common options.
+     * Uses -f to background after successful connection.
      *
      * @param array  $server     server connection parameters
      * @param string $tunnelArgs the -L or -D argument string
@@ -529,7 +534,11 @@ class DbiMysqli implements DbiExtension
     {
         $sshPort = ! empty($server['ssh_port']) ? (int) $server['ssh_port'] : 22;
 
-        $cmd = 'ssh -N -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new';
+        $cmd = 'ssh -N -f'
+            . ' -o ExitOnForwardFailure=yes'
+            . ' -o StrictHostKeyChecking=accept-new'
+            . ' -o ServerAliveInterval=60'
+            . ' -o ServerAliveCountMax=3';
         $cmd .= ' ' . $tunnelArgs;
         $cmd .= ' -p ' . $sshPort;
 
@@ -552,6 +561,7 @@ class DbiMysqli implements DbiExtension
 
     /**
      * Start an SSH local forward tunnel and return the local Unix socket path.
+     * Reuses an existing tunnel if one is already running for this config.
      *
      * @param array $server server connection parameters
      *
@@ -562,7 +572,23 @@ class DbiMysqli implements DbiExtension
         $mysqlHost = $server['host'];
         $mysqlPort = ! empty($server['port']) ? (int) $server['port'] : 3306;
 
-        $socketPath = sys_get_temp_dir() . '/pma_ssh_local_' . uniqid('', true) . '.sock';
+        $id = $this->tunnelId('pma_ssh_local', [
+            $server['ssh_host'], (string) ($server['ssh_port'] ?? 22),
+            $server['ssh_user'], $mysqlHost, (string) $mysqlPort,
+        ]);
+        $socketPath = sys_get_temp_dir() . '/' . $id . '.sock';
+        $pidFile = sys_get_temp_dir() . '/' . $id . '.pid';
+
+        // Reuse existing tunnel
+        if (file_exists($socketPath) && file_exists($pidFile)) {
+            $pid = (int) file_get_contents($pidFile);
+            if ($this->isProcessAlive($pid)) {
+                return $socketPath;
+            }
+
+            @unlink($socketPath);
+            @unlink($pidFile);
+        }
 
         $tunnelArgs = sprintf(
             '-L %s:%s:%d',
@@ -572,23 +598,7 @@ class DbiMysqli implements DbiExtension
         );
 
         $cmd = $this->buildSshCommand($server, $tunnelArgs);
-
-        $descriptorspec = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
-
-        $proc = proc_open($cmd, $descriptorspec, $pipes);
-
-        if (! is_resource($proc)) {
-            trigger_error(
-                __('Failed to start SSH local forward tunnel.'),
-                E_USER_WARNING
-            );
-
-            return false;
-        }
+        shell_exec($cmd);
 
         $waited = 0;
         while (! file_exists($socketPath) && $waited < 50) {
@@ -597,7 +607,6 @@ class DbiMysqli implements DbiExtension
         }
 
         if (! file_exists($socketPath)) {
-            proc_terminate($proc);
             trigger_error(
                 __('Timeout waiting for SSH local forward tunnel socket.'),
                 E_USER_WARNING
@@ -606,11 +615,13 @@ class DbiMysqli implements DbiExtension
             return false;
         }
 
-        self::$socatProcesses[] = ['proc' => $proc, 'socket' => $socketPath];
+        // Find the ssh process PID
+        $pid = (int) trim((string) shell_exec(
+            'pgrep -f ' . escapeshellarg($socketPath) . ' 2>/dev/null | head -1'
+        ));
 
-        if (! self::$shutdownRegistered) {
-            register_shutdown_function([self::class, 'cleanupSocatProcesses']);
-            self::$shutdownRegistered = true;
+        if ($pid > 0) {
+            file_put_contents($pidFile, (string) $pid);
         }
 
         return $socketPath;
@@ -618,6 +629,7 @@ class DbiMysqli implements DbiExtension
 
     /**
      * Start an SSH dynamic SOCKS5 tunnel and return the local port number.
+     * Reuses an existing tunnel if one is already running for this config.
      *
      * @param array $server server connection parameters
      *
@@ -625,6 +637,30 @@ class DbiMysqli implements DbiExtension
      */
     private function startSshDynamicTunnel(array $server)
     {
+        $id = $this->tunnelId('pma_ssh_dynamic', [
+            $server['ssh_host'], (string) ($server['ssh_port'] ?? 22),
+            $server['ssh_user'],
+        ]);
+        $pidFile = sys_get_temp_dir() . '/' . $id . '.pid';
+        $portFile = sys_get_temp_dir() . '/' . $id . '.port';
+
+        // Reuse existing tunnel
+        if (file_exists($pidFile) && file_exists($portFile)) {
+            $pid = (int) file_get_contents($pidFile);
+            $port = (int) file_get_contents($portFile);
+            if ($this->isProcessAlive($pid) && $port > 0) {
+                $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.5);
+                if ($fp !== false) {
+                    fclose($fp);
+
+                    return $port;
+                }
+            }
+
+            @unlink($pidFile);
+            @unlink($portFile);
+        }
+
         // Find a free port
         $sock = @stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
         if ($sock === false) {
@@ -641,25 +677,8 @@ class DbiMysqli implements DbiExtension
         $localPort = (int) explode(':', $localAddr)[1];
 
         $tunnelArgs = sprintf('-D 127.0.0.1:%d', $localPort);
-
         $cmd = $this->buildSshCommand($server, $tunnelArgs);
-
-        $descriptorspec = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
-
-        $proc = proc_open($cmd, $descriptorspec, $pipes);
-
-        if (! is_resource($proc)) {
-            trigger_error(
-                __('Failed to start SSH dynamic SOCKS5 tunnel.'),
-                E_USER_WARNING
-            );
-
-            return false;
-        }
+        shell_exec($cmd);
 
         // Wait for the SOCKS5 port to become reachable
         $waited = 0;
@@ -675,7 +694,6 @@ class DbiMysqli implements DbiExtension
         }
 
         if ($waited >= 50) {
-            proc_terminate($proc);
             trigger_error(
                 __('Timeout waiting for SSH dynamic SOCKS5 tunnel.'),
                 E_USER_WARNING
@@ -684,12 +702,16 @@ class DbiMysqli implements DbiExtension
             return false;
         }
 
-        self::$socatProcesses[] = ['proc' => $proc, 'socket' => ''];
+        // Find the ssh process PID
+        $pid = (int) trim((string) shell_exec(
+            'pgrep -f ' . escapeshellarg('127.0.0.1:' . $localPort) . ' 2>/dev/null | head -1'
+        ));
 
-        if (! self::$shutdownRegistered) {
-            register_shutdown_function([self::class, 'cleanupSocatProcesses']);
-            self::$shutdownRegistered = true;
+        if ($pid > 0) {
+            file_put_contents($pidFile, (string) $pid);
         }
+
+        file_put_contents($portFile, (string) $localPort);
 
         return $localPort;
     }

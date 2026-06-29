@@ -11,7 +11,7 @@ A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support 
 - **SSH Dynamic (SOCKS5)** — SSH dynamic proxy as a SOCKS5 tunnel
 - SOCKS5 username/password authentication
 - SSH private key and password authentication
-- Automatic cleanup of tunnel processes and temporary socket files on request end
+- Persistent tunnels — SSH/socat processes survive across HTTP requests, automatically reused for the same connection config
 - Non-invasive — behaves exactly like stock phpMyAdmin when proxy/tunnel is not configured
 
 ## Requirements

@@ -11,7 +11,7 @@
 - **SSH Dynamic (SOCKS5)** — 通过 SSH 动态代理建立 SOCKS5 隧道
 - 支持 SOCKS5 用户名/密码认证
 - 支持 SSH 私钥认证和密码认证
-- 请求结束后自动清理隧道进程和临时 socket 文件
+- 持久化隧道 — SSH/socat 进程跨 HTTP 请求存活，相同配置自动复用
 - 对 phpMyAdmin 其他功能无侵入，不配置时行为与原版完全一致
 
 ## 依赖
