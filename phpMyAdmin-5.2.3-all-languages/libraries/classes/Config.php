@@ -1286,6 +1286,13 @@ class Config
                     'socks5_proxy',
                     'socks5_user',
                     'socks5_pass',
+                    'ssh_tunnel',
+                    'ssh_host',
+                    'ssh_port',
+                    'ssh_user',
+                    'ssh_password',
+                    'ssh_key',
+                    'ssh_extra_args',
                 ];
                 foreach ($shared as $item) {
                     if (! isset($cfg['Server'][$item])) {

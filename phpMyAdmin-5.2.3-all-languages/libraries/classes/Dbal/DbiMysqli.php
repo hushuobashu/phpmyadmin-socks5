@@ -16,7 +16,9 @@ use function __;
 use function defined;
 use function escapeshellarg;
 use function explode;
+use function fclose;
 use function file_exists;
+use function fsockopen;
 use function is_resource;
 use function mysqli_connect_errno;
 use function mysqli_connect_error;
@@ -27,6 +29,8 @@ use function proc_open;
 use function proc_terminate;
 use function register_shutdown_function;
 use function sprintf;
+use function stream_socket_get_name;
+use function stream_socket_server;
 use function stripos;
 use function sys_get_temp_dir;
 use function trigger_error;
@@ -122,6 +126,27 @@ class DbiMysqli implements DbiExtension
             $host = 'p:' . $server['host'];
         } else {
             $host = $server['host'];
+        }
+
+        // SSH tunnel: launch ssh to create a tunnel before connecting
+        if (! empty($server['ssh_tunnel']) && ! empty($server['ssh_host'])) {
+            if ($server['ssh_tunnel'] === 'local') {
+                $sshSocketPath = $this->startSshLocalTunnel($server);
+                if ($sshSocketPath === false) {
+                    return false;
+                }
+
+                $host = 'localhost';
+                $server['socket'] = $sshSocketPath;
+                $server['port'] = 0;
+            } elseif ($server['ssh_tunnel'] === 'dynamic') {
+                $dynamicPort = $this->startSshDynamicTunnel($server);
+                if ($dynamicPort === false) {
+                    return false;
+                }
+
+                $server['socks5_proxy'] = '127.0.0.1:' . $dynamicPort;
+            }
         }
 
         // SOCKS5 proxy: launch socat to create a local Unix socket tunnel
@@ -484,11 +509,188 @@ class DbiMysqli implements DbiExtension
                 proc_terminate($entry['proc']);
             }
 
-            if (file_exists($entry['socket'])) {
+            if (! empty($entry['socket']) && file_exists($entry['socket'])) {
                 @unlink($entry['socket']);
             }
         }
 
         self::$socatProcesses = [];
+    }
+
+    /**
+     * Build the SSH command string with authentication and common options.
+     *
+     * @param array  $server     server connection parameters
+     * @param string $tunnelArgs the -L or -D argument string
+     *
+     * @return string full command string
+     */
+    private function buildSshCommand(array $server, string $tunnelArgs): string
+    {
+        $sshPort = ! empty($server['ssh_port']) ? (int) $server['ssh_port'] : 22;
+
+        $cmd = 'ssh -N -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new';
+        $cmd .= ' ' . $tunnelArgs;
+        $cmd .= ' -p ' . $sshPort;
+
+        if (! empty($server['ssh_key'])) {
+            $cmd .= ' -i ' . escapeshellarg($server['ssh_key']);
+        }
+
+        if (! empty($server['ssh_extra_args'])) {
+            $cmd .= ' ' . $server['ssh_extra_args'];
+        }
+
+        $cmd .= ' ' . escapeshellarg($server['ssh_user'] . '@' . $server['ssh_host']);
+
+        if (! empty($server['ssh_password'])) {
+            $cmd = 'sshpass -p ' . escapeshellarg($server['ssh_password']) . ' ' . $cmd;
+        }
+
+        return $cmd;
+    }
+
+    /**
+     * Start an SSH local forward tunnel and return the local Unix socket path.
+     *
+     * @param array $server server connection parameters
+     *
+     * @return string|false socket path on success, false on failure
+     */
+    private function startSshLocalTunnel(array $server)
+    {
+        $mysqlHost = $server['host'];
+        $mysqlPort = ! empty($server['port']) ? (int) $server['port'] : 3306;
+
+        $socketPath = sys_get_temp_dir() . '/pma_ssh_local_' . uniqid('', true) . '.sock';
+
+        $tunnelArgs = sprintf(
+            '-L %s:%s:%d',
+            escapeshellarg($socketPath),
+            escapeshellarg($mysqlHost),
+            $mysqlPort
+        );
+
+        $cmd = $this->buildSshCommand($server, $tunnelArgs);
+
+        $descriptorspec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $proc = proc_open($cmd, $descriptorspec, $pipes);
+
+        if (! is_resource($proc)) {
+            trigger_error(
+                __('Failed to start SSH local forward tunnel.'),
+                E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        $waited = 0;
+        while (! file_exists($socketPath) && $waited < 50) {
+            usleep(100000);
+            $waited++;
+        }
+
+        if (! file_exists($socketPath)) {
+            proc_terminate($proc);
+            trigger_error(
+                __('Timeout waiting for SSH local forward tunnel socket.'),
+                E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        self::$socatProcesses[] = ['proc' => $proc, 'socket' => $socketPath];
+
+        if (! self::$shutdownRegistered) {
+            register_shutdown_function([self::class, 'cleanupSocatProcesses']);
+            self::$shutdownRegistered = true;
+        }
+
+        return $socketPath;
+    }
+
+    /**
+     * Start an SSH dynamic SOCKS5 tunnel and return the local port number.
+     *
+     * @param array $server server connection parameters
+     *
+     * @return int|false local port on success, false on failure
+     */
+    private function startSshDynamicTunnel(array $server)
+    {
+        // Find a free port
+        $sock = @stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+        if ($sock === false) {
+            trigger_error(
+                __('Failed to find a free port for SSH dynamic tunnel.'),
+                E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        $localAddr = stream_socket_get_name($sock, false);
+        fclose($sock);
+        $localPort = (int) explode(':', $localAddr)[1];
+
+        $tunnelArgs = sprintf('-D 127.0.0.1:%d', $localPort);
+
+        $cmd = $this->buildSshCommand($server, $tunnelArgs);
+
+        $descriptorspec = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $proc = proc_open($cmd, $descriptorspec, $pipes);
+
+        if (! is_resource($proc)) {
+            trigger_error(
+                __('Failed to start SSH dynamic SOCKS5 tunnel.'),
+                E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        // Wait for the SOCKS5 port to become reachable
+        $waited = 0;
+        while ($waited < 50) {
+            $fp = @fsockopen('127.0.0.1', $localPort, $errno, $errstr, 0.1);
+            if ($fp !== false) {
+                fclose($fp);
+                break;
+            }
+
+            usleep(100000);
+            $waited++;
+        }
+
+        if ($waited >= 50) {
+            proc_terminate($proc);
+            trigger_error(
+                __('Timeout waiting for SSH dynamic SOCKS5 tunnel.'),
+                E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        self::$socatProcesses[] = ['proc' => $proc, 'socket' => ''];
+
+        if (! self::$shutdownRegistered) {
+            register_shutdown_function([self::class, 'cleanupSocatProcesses']);
+            self::$shutdownRegistered = true;
+        }
+
+        return $localPort;
     }
 }

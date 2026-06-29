@@ -229,6 +229,56 @@ $cfg['Servers'][$i]['socks5_user'] = '';
 $cfg['Servers'][$i]['socks5_pass'] = '';
 
 /**
+ * SSH tunnel mode for MySQL connection
+ * Values: '' (disabled), 'local' (SSH local forward), 'dynamic' (SSH dynamic SOCKS5 proxy)
+ *
+ * @global string $cfg['Servers'][$i]['ssh_tunnel']
+ */
+$cfg['Servers'][$i]['ssh_tunnel'] = '';
+
+/**
+ * SSH server hostname or IP address (jump host)
+ *
+ * @global string $cfg['Servers'][$i]['ssh_host']
+ */
+$cfg['Servers'][$i]['ssh_host'] = '';
+
+/**
+ * SSH server port
+ *
+ * @global integer $cfg['Servers'][$i]['ssh_port']
+ */
+$cfg['Servers'][$i]['ssh_port'] = 22;
+
+/**
+ * SSH username
+ *
+ * @global string $cfg['Servers'][$i]['ssh_user']
+ */
+$cfg['Servers'][$i]['ssh_user'] = '';
+
+/**
+ * SSH password (requires sshpass installed on the server)
+ *
+ * @global string $cfg['Servers'][$i]['ssh_password']
+ */
+$cfg['Servers'][$i]['ssh_password'] = '';
+
+/**
+ * Path to SSH private key file
+ *
+ * @global string $cfg['Servers'][$i]['ssh_key']
+ */
+$cfg['Servers'][$i]['ssh_key'] = '';
+
+/**
+ * Extra SSH command-line arguments, e.g. '-o StrictHostKeyChecking=no'
+ *
+ * @global string $cfg['Servers'][$i]['ssh_extra_args']
+ */
+$cfg['Servers'][$i]['ssh_extra_args'] = '';
+
+/**
  * MySQL control host. This permits to use a host different than the
  * main host, for the phpMyAdmin configuration storage. If left empty,
  * $cfg['Servers'][$i]['host'] is used instead.

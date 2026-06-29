@@ -36,6 +36,16 @@ $cfg['Servers'][$i]['AllowNoPassword'] = false;
 // $cfg['Servers'][$i]['socks5_user'] = '';
 // $cfg['Servers'][$i]['socks5_pass'] = '';
 
+/* SSH tunnel for MySQL connection */
+/* ssh_tunnel: 'local' (SSH port forward) or 'dynamic' (SSH SOCKS5 proxy) */
+// $cfg['Servers'][$i]['ssh_tunnel'] = 'local';
+// $cfg['Servers'][$i]['ssh_host'] = 'jump.example.com';
+// $cfg['Servers'][$i]['ssh_port'] = 22;
+// $cfg['Servers'][$i]['ssh_user'] = 'deploy';
+// $cfg['Servers'][$i]['ssh_key'] = '/path/to/private_key';
+// $cfg['Servers'][$i]['ssh_password'] = '';            // requires sshpass
+// $cfg['Servers'][$i]['ssh_extra_args'] = '';
+
 /**
  * phpMyAdmin configuration storage settings.
  */

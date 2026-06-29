@@ -120,6 +120,55 @@ final class Server
     public $socks5_pass;
 
     /**
+     * SSH tunnel mode: '' (disabled), 'local', or 'dynamic'
+     *
+     * @var string
+     */
+    public $ssh_tunnel;
+
+    /**
+     * SSH server hostname or IP address
+     *
+     * @var string
+     */
+    public $ssh_host;
+
+    /**
+     * SSH server port
+     *
+     * @var int
+     */
+    public $ssh_port;
+
+    /**
+     * SSH username
+     *
+     * @var string
+     */
+    public $ssh_user;
+
+    /**
+     * SSH password (requires sshpass)
+     *
+     * @var string
+     */
+    public $ssh_password;
+
+    /**
+     * Path to SSH private key file
+     *
+     * @var string
+     */
+    public $ssh_key;
+
+    /**
+     * Extra SSH command-line arguments
+     *
+     * @var string
+     */
+    public $ssh_extra_args;
+
+    /**
      * MySQL control host. This permits to use a host different than the
      * main host, for the phpMyAdmin configuration storage. If left empty,
      * $cfg['Servers'][$i]['host'] is used instead.
@@ -550,6 +599,13 @@ final class Server
         $this->socks5_proxy = $this->setSocks5Proxy($server);
         $this->socks5_user = $this->setSocks5User($server);
         $this->socks5_pass = $this->setSocks5Pass($server);
+        $this->ssh_tunnel = $this->setSshTunnel($server);
+        $this->ssh_host = $this->setSshHost($server);
+        $this->ssh_port = $this->setSshPort($server);
+        $this->ssh_user = $this->setSshUser($server);
+        $this->ssh_password = $this->setSshPassword($server);
+        $this->ssh_key = $this->setSshKey($server);
+        $this->ssh_extra_args = $this->setSshExtraArgs($server);
         $this->controlhost = $this->setControlhost($server);
         $this->controlport = $this->setControlport($server);
         $this->controluser = $this->setControluser($server);
@@ -763,6 +819,90 @@ final class Server
     {
         if (isset($server['socks5_pass'])) {
             return (string) $server['socks5_pass'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshTunnel(array $server): string
+    {
+        if (isset($server['ssh_tunnel']) && in_array($server['ssh_tunnel'], ['local', 'dynamic'], true)) {
+            return $server['ssh_tunnel'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshHost(array $server): string
+    {
+        if (isset($server['ssh_host'])) {
+            return (string) $server['ssh_host'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshPort(array $server): int
+    {
+        if (isset($server['ssh_port'])) {
+            return (int) $server['ssh_port'];
+        }
+
+        return 22;
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshUser(array $server): string
+    {
+        if (isset($server['ssh_user'])) {
+            return (string) $server['ssh_user'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshPassword(array $server): string
+    {
+        if (isset($server['ssh_password'])) {
+            return (string) $server['ssh_password'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshKey(array $server): string
+    {
+        if (isset($server['ssh_key'])) {
+            return (string) $server['ssh_key'];
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<int|string, mixed> $server
+     */
+    private function setSshExtraArgs(array $server): string
+    {
+        if (isset($server['ssh_extra_args'])) {
+            return (string) $server['ssh_extra_args'];
         }
 
         return '';
