@@ -1,47 +1,49 @@
 # phpmyadmin-socks5
 
-基于 phpMyAdmin 5.2.3 的修改版本，增加了通过 SOCKS5 代理和 SSH 隧道连接 MySQL 的支持。
+A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support for MySQL connections.
 
-## 功能
+[中文文档](README_zh.md)
 
-- **SOCKS5 代理** — 通过 socat 建立 SOCKS5 隧道连接 MySQL
-- **SSH Local Forward** — 通过 SSH 端口转发直连远程 MySQL
-- **SSH Dynamic (SOCKS5)** — 通过 SSH 动态代理建立 SOCKS5 隧道
-- 支持 SOCKS5 用户名/密码认证
-- 支持 SSH 私钥认证和密码认证
-- 请求结束后自动清理隧道进程和临时 socket 文件
-- 对 phpMyAdmin 其他功能无侵入，不配置时行为与原版完全一致
+## Features
 
-## 依赖
+- **SOCKS5 Proxy** — Connect to MySQL through a SOCKS5 proxy via socat
+- **SSH Local Forward** — Direct MySQL access via SSH port forwarding
+- **SSH Dynamic (SOCKS5)** — SSH dynamic proxy as a SOCKS5 tunnel
+- SOCKS5 username/password authentication
+- SSH private key and password authentication
+- Automatic cleanup of tunnel processes and temporary socket files on request end
+- Non-invasive — behaves exactly like stock phpMyAdmin when proxy/tunnel is not configured
+
+## Requirements
 
 - PHP 7.2+
-- `socat` 1.8+（SOCKS5 代理模式和 SSH dynamic 模式需要）
-- `ssh`（SSH 隧道模式需要，系统自带）
-- `sshpass`（仅 SSH 密码认证时需要）
+- `socat` 1.8+ (required for SOCKS5 proxy mode and SSH dynamic mode)
+- `ssh` (required for SSH tunnel mode, usually pre-installed)
+- `sshpass` (only required for SSH password authentication)
 
-## 配置
+## Configuration
 
-在 `config.inc.php` 中添加配置。
+Add the following to your `config.inc.php`.
 
-### 方式一：SOCKS5 代理
+### Method 1: SOCKS5 Proxy
 
-适用于已有 SOCKS5 代理服务器的场景。
+For scenarios where a SOCKS5 proxy server is already available.
 
 ```php
 $cfg['Servers'][$i]['host'] = 'your-mysql-host';
 $cfg['Servers'][$i]['port'] = '3306';
 
 $cfg['Servers'][$i]['socks5_proxy'] = '127.0.0.1:1080';
-$cfg['Servers'][$i]['socks5_user'] = '';    // 可选
-$cfg['Servers'][$i]['socks5_pass'] = '';    // 可选
+$cfg['Servers'][$i]['socks5_user'] = '';    // optional
+$cfg['Servers'][$i]['socks5_pass'] = '';    // optional
 ```
 
-### 方式二：SSH Local Forward
+### Method 2: SSH Local Forward
 
-适用于通过跳板机访问内网 MySQL 的场景。最直接高效。
+For accessing MySQL on an internal network through a jump host. The most direct and efficient approach.
 
 ```php
-$cfg['Servers'][$i]['host'] = '10.0.0.100';       // 目标 MySQL（跳板机可达）
+$cfg['Servers'][$i]['host'] = '10.0.0.100';       // target MySQL (reachable from jump host)
 $cfg['Servers'][$i]['port'] = '3306';
 
 $cfg['Servers'][$i]['ssh_tunnel'] = 'local';
@@ -51,9 +53,9 @@ $cfg['Servers'][$i]['ssh_user'] = 'deploy';
 $cfg['Servers'][$i]['ssh_key'] = '/path/to/private_key';
 ```
 
-### 方式三：SSH Dynamic (SOCKS5)
+### Method 3: SSH Dynamic (SOCKS5)
 
-适用于需要通过跳板机建立动态代理的场景。
+For scenarios requiring a dynamic proxy through a jump host.
 
 ```php
 $cfg['Servers'][$i]['host'] = '10.0.0.100';
@@ -63,39 +65,39 @@ $cfg['Servers'][$i]['ssh_tunnel'] = 'dynamic';
 $cfg['Servers'][$i]['ssh_host'] = 'jump.example.com';
 $cfg['Servers'][$i]['ssh_port'] = 22;
 $cfg['Servers'][$i]['ssh_user'] = 'deploy';
-$cfg['Servers'][$i]['ssh_password'] = 'mypassword';   // 需要 sshpass
+$cfg['Servers'][$i]['ssh_password'] = 'mypassword';   // requires sshpass
 ```
 
-### SSH 认证方式
+### SSH Authentication
 
 ```php
-// 私钥认证（推荐）
+// Private key (recommended)
 $cfg['Servers'][$i]['ssh_key'] = '/home/www/.ssh/id_rsa';
 
-// 密码认证（需要 sshpass）
+// Password (requires sshpass)
 $cfg['Servers'][$i]['ssh_password'] = 'your-password';
 
-// 额外 SSH 参数
+// Extra SSH arguments
 $cfg['Servers'][$i]['ssh_extra_args'] = '-o StrictHostKeyChecking=no';
 ```
 
-### 优先级
+### Priority
 
-`ssh_tunnel` > `socks5_proxy`。如果同时配置了两者，以 SSH 隧道为准。
+`ssh_tunnel` > `socks5_proxy`. If both are configured, the SSH tunnel takes precedence.
 
-## 原理
+## How It Works
 
 ```
-# SOCKS5 代理模式
+# SOCKS5 proxy mode
 phpMyAdmin → Unix socket → socat → SOCKS5 proxy → MySQL server
 
-# SSH Local Forward 模式
+# SSH Local Forward mode
 phpMyAdmin → Unix socket → SSH tunnel → MySQL server
 
-# SSH Dynamic 模式
+# SSH Dynamic mode
 phpMyAdmin → Unix socket → socat → SSH SOCKS5 proxy → MySQL server
 ```
 
-## 基于
+## Based On
 
 - [phpMyAdmin 5.2.3](https://www.phpmyadmin.net/) (all-languages)
