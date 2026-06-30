@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MongoDB Admin - Login</title>
-    <link rel="stylesheet" href="<?= dirname($_SERVER['SCRIPT_NAME']) ?>/../themes/pmahomme/css/theme.css">
+    <link rel="stylesheet" href="/themes/pmahomme/css/theme.css">
     <style>
         body { background: #f4f4f4; }
         .login-box { max-width: 480px; margin: 80px auto; }

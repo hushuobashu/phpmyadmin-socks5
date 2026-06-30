@@ -6,6 +6,10 @@ $currentDb = $currentDb ?? ($_GET['db'] ?? '');
 $currentCol = $currentCol ?? ($_GET['col'] ?? '');
 
 require_once __DIR__ . '/helpers.php';
+
+// Compute absolute base paths
+$mongoBase = '/mongodb';
+$pmaBase = '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,21 +17,21 @@ require_once __DIR__ . '/helpers.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= h($pageTitle) ?></title>
-    <link rel="stylesheet" href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/../themes/pmahomme/css/theme.css">
-    <link rel="stylesheet" href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/../js/vendor/codemirror/lib/codemirror.css">
-    <link rel="stylesheet" href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/assets/mongodb.css">
+    <link rel="stylesheet" href="<?= $pmaBase ?>/themes/pmahomme/css/theme.css">
+    <link rel="stylesheet" href="<?= $pmaBase ?>/js/vendor/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="<?= $mongoBase ?>/assets/mongodb.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a class="navbar-brand" href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/pages/databases.php">
+        <a class="navbar-brand" href="<?= $mongoBase ?>/pages/databases.php">
             <strong>MongoDB</strong>
         </a>
         <span class="navbar-text text-light me-auto ms-3">
             <?= h(mongoGetServerLabel()) ?>
         </span>
-        <a href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/pages/server_info.php" class="btn btn-outline-light btn-sm me-2">Server Info</a>
-        <a href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/../index.php" class="btn btn-outline-secondary btn-sm me-2">MySQL</a>
-        <a href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
+        <a href="<?= $mongoBase ?>/pages/server_info.php" class="btn btn-outline-light btn-sm me-2">Server Info</a>
+        <a href="<?= $pmaBase ?>/index.php" class="btn btn-outline-secondary btn-sm me-2">MySQL</a>
+        <a href="<?= $mongoBase ?>/logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
     </nav>
 
     <div class="container-fluid mt-0">
@@ -42,9 +46,9 @@ require_once __DIR__ . '/helpers.php';
                 <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="mb-3">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/pages/databases.php">Databases</a></li>
+                        <li class="breadcrumb-item"><a href="<?= $mongoBase ?>/pages/databases.php">Databases</a></li>
 <?php if ($currentDb): ?>
-                        <li class="breadcrumb-item"><a href="<?= h(dirname($_SERVER['SCRIPT_NAME'])) ?>/pages/collections.php?db=<?= urlencode($currentDb) ?>"><?= h($currentDb) ?></a></li>
+                        <li class="breadcrumb-item"><a href="<?= $mongoBase ?>/pages/collections.php?db=<?= urlencode($currentDb) ?>"><?= h($currentDb) ?></a></li>
 <?php endif; ?>
 <?php if ($currentCol): ?>
                         <li class="breadcrumb-item active"><?= h($currentCol) ?></li>

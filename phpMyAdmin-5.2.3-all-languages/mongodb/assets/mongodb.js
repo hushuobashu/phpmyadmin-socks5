@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    var basePath = document.querySelector('link[href*="mongodb.css"]')?.href.replace(/assets\/mongodb\.css.*/, '') || '';
+    var basePath = '/mongodb/';
 
     function loadTree() {
         var el = document.getElementById('mongo-tree');
