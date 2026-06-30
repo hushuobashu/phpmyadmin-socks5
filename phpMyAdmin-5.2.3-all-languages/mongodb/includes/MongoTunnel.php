@@ -435,6 +435,25 @@ class MongoTunnel
             $uri = str_replace($original, $local, $uri);
         }
 
+        // When tunneling, use only the first host with directConnection=true.
+        // MongoDB replica set discovery would return internal IPs that are
+        // unreachable from the local machine, even through the tunnel.
+        $tunnelHosts = self::parseUriHosts($uri);
+        if (count($tunnelHosts) > 1) {
+            $firstHost = $tunnelHosts[0];
+            $allHosts = implode(',', $tunnelHosts);
+            $uri = str_replace($allHosts, $firstHost, $uri);
+        }
+
+        // Remove replicaSet param and add directConnection=true
+        $uri = preg_replace('/[&?]replicaSet=[^&]*/', '', $uri);
+        if (strpos($uri, '?') !== false) {
+            $uri .= '&directConnection=true';
+        } else {
+            // If we removed the only param, the '?' might be gone too
+            $uri = preg_replace('#/(\w+)$#', '/$1?directConnection=true', $uri);
+        }
+
         return $uri;
     }
 
