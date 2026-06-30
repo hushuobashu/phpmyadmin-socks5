@@ -180,6 +180,7 @@ $cfg['SaveDir'] = '';
  */
 // $i = 0;
 //
+// // Method 1: host/port/user/pass
 // $i++;
 // $cfg['MongoDB'][$i]['verbose'] = 'Local MongoDB';
 // $cfg['MongoDB'][$i]['host'] = 'localhost';
@@ -187,6 +188,11 @@ $cfg['SaveDir'] = '';
 // $cfg['MongoDB'][$i]['username'] = '';
 // $cfg['MongoDB'][$i]['password'] = '';
 // $cfg['MongoDB'][$i]['auth_database'] = 'admin';
+//
+// // Method 2: full URI (supports replica sets, SRV, etc.)
+// $i++;
+// $cfg['MongoDB'][$i]['verbose'] = 'Aliyun Production';
+// $cfg['MongoDB'][$i]['uri'] = 'mongodb://user:pass@host1:3717,host2:3717/dbname?authSource=admin&replicaSet=xxx';
 //
 // // SSH tunnel (same options as MySQL servers)
 // // $cfg['MongoDB'][$i]['ssh_tunnel'] = 'local';       // 'local' or 'dynamic'

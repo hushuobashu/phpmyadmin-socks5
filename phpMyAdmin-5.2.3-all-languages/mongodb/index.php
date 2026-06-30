@@ -25,32 +25,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // If a pre-configured server is selected, use its settings
     if ($serverIdx > 0 && isset($mongoServers[$serverIdx])) {
         $srv = $mongoServers[$serverIdx];
-        $host = $srv['host'];
-        $port = (int) $srv['port'];
-        $username = $username ?: $srv['username'];
-        $password = $password ?: $srv['password'];
-        $authDb = $authDb ?: $srv['auth_database'];
-        $label = $srv['verbose'] ?: ($host . ':' . $port);
+        $label = $srv['verbose'] ?: ($srv['host'] . ':' . $srv['port']);
 
-        // Resolve tunnel if configured
-        if (!empty($srv['ssh_tunnel']) || !empty($srv['socks5_proxy'])) {
-            require_once __DIR__ . '/includes/MongoTunnel.php';
-            $resolved = MongoTunnel::resolve($srv);
-            $host = $resolved['host'];
-            $port = $resolved['port'];
+        // If a full URI is configured, use it directly
+        if (!empty($srv['uri'])) {
+            $uri = $srv['uri'];
+        } else {
+            $host = $srv['host'];
+            $port = (int) $srv['port'];
+            $username = $username ?: $srv['username'];
+            $password = $password ?: $srv['password'];
+            $authDb = $authDb ?: $srv['auth_database'];
+
+            // Resolve tunnel if configured
+            if (!empty($srv['ssh_tunnel']) || !empty($srv['socks5_proxy'])) {
+                require_once __DIR__ . '/includes/MongoTunnel.php';
+                $resolved = MongoTunnel::resolve($srv);
+                $host = $resolved['host'];
+                $port = $resolved['port'];
+            }
+
+            $uri = '';
         }
     } else {
         $label = $host . ':' . $port;
+        $uri = '';
     }
 
-    // Build connection URI
-    $uri = 'mongodb://';
-    if ($username !== '') {
-        $uri .= urlencode($username) . ':' . urlencode($password) . '@';
-    }
-    $uri .= $host . ':' . $port . '/';
-    if ($username !== '') {
-        $uri .= '?authSource=' . urlencode($authDb);
+    // Build connection URI if not already set from config
+    if ($uri === '') {
+        $uri = 'mongodb://';
+        if ($username !== '') {
+            $uri .= urlencode($username) . ':' . urlencode($password) . '@';
+        }
+        $uri .= $host . ':' . $port . '/';
+        if ($username !== '') {
+            $uri .= '?authSource=' . urlencode($authDb);
+        }
     }
 
     try {
@@ -98,9 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="mb-3">
                         <label class="form-label">Server</label>
                         <select name="server" id="serverSelect" class="form-select">
-                            <option value="0">-- Manual --</option>
+                            <option value="0" data-has-uri="0">-- Manual --</option>
 <?php foreach ($mongoServers as $idx => $srv): ?>
-                            <option value="<?= $idx ?>"><?= h($srv['verbose'] ?: ($srv['host'] . ':' . $srv['port'])) ?></option>
+                            <option value="<?= $idx ?>" data-has-uri="<?= !empty($srv['uri']) ? '1' : '0' ?>"><?= h($srv['verbose'] ?: ($srv['uri'] ? 'URI connection' : ($srv['host'] . ':' . $srv['port']))) ?></option>
 <?php endforeach; ?>
                         </select>
                     </div>
@@ -119,17 +130,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Username <small class="text-muted">(optional)</small></label>
-                        <input type="text" name="username" class="form-control" autocomplete="username">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" autocomplete="current-password">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Auth Database</label>
-                        <input type="text" name="auth_database" class="form-control" value="admin">
+                    <div id="credential-fields">
+                        <div class="mb-3">
+                            <label class="form-label">Username <small class="text-muted">(optional)</small></label>
+                            <input type="text" name="username" class="form-control" autocomplete="username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" name="password" class="form-control" autocomplete="current-password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Auth Database</label>
+                            <input type="text" name="auth_database" class="form-control" value="admin">
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">Connect</button>
@@ -140,7 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script>
     document.getElementById('serverSelect')?.addEventListener('change', function() {
-        document.getElementById('manual-fields').style.display = this.value === '0' ? '' : 'none';
+        var opt = this.options[this.selectedIndex];
+        var hasUri = opt.getAttribute('data-has-uri') === '1';
+        var isManual = this.value === '0';
+        document.getElementById('manual-fields').style.display = isManual ? '' : 'none';
+        document.getElementById('credential-fields').style.display = hasUri ? 'none' : '';
     });
     </script>
 </body>

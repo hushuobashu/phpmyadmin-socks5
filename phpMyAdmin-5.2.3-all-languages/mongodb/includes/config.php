@@ -20,6 +20,7 @@ $mongoDefaults = [
     'username'       => '',
     'password'       => '',
     'auth_database'  => 'admin',
+    'uri'            => '',
     'ssh_tunnel'     => '',
     'ssh_host'       => '',
     'ssh_port'       => 22,
