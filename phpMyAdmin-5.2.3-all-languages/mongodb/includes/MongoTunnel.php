@@ -312,4 +312,151 @@ class MongoTunnel
 
         return ['host' => $config['host'], 'port' => (int) ($config['port'] ?: 27017)];
     }
+
+    /**
+     * Rewrite a MongoDB URI to route through a tunnel.
+     * Parses hosts from the URI, creates a socat bridge for each, replaces with local ports.
+     */
+    public static function rewriteUri(string $uri, array $config): string
+    {
+        // Get SOCKS5 proxy port (either from SSH dynamic or direct SOCKS5)
+        $socksHost = '';
+        $socksPort = 0;
+
+        if (!empty($config['ssh_tunnel']) && $config['ssh_tunnel'] === 'dynamic') {
+            // Start SSH dynamic tunnel to get SOCKS5 port
+            $sshId = self::tunnelId('pma_mongo_ssh_dyn', [
+                $config['ssh_host'], (string) ($config['ssh_port'] ?? 22),
+                $config['ssh_user'],
+            ]);
+            $sshPidFile = sys_get_temp_dir() . '/' . $sshId . '.pid';
+            $sshPortFile = sys_get_temp_dir() . '/' . $sshId . '.port';
+
+            if (file_exists($sshPidFile) && file_exists($sshPortFile)) {
+                $pid = (int) file_get_contents($sshPidFile);
+                $port = (int) file_get_contents($sshPortFile);
+                if (self::isProcessAlive($pid) && $port > 0) {
+                    $socksHost = '127.0.0.1';
+                    $socksPort = $port;
+                } else {
+                    @unlink($sshPidFile);
+                    @unlink($sshPortFile);
+                }
+            }
+
+            if ($socksPort === 0) {
+                $sock = @stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+                if ($sock === false) {
+                    throw new \RuntimeException('Failed to find free port for SSH dynamic tunnel');
+                }
+                $localAddr = stream_socket_get_name($sock, false);
+                fclose($sock);
+                $socksPort = (int) explode(':', $localAddr)[1];
+
+                $tunnelArgs = sprintf('-D 127.0.0.1:%d', $socksPort);
+                $cmd = self::buildSshCommand($config, $tunnelArgs);
+                shell_exec($cmd);
+
+                $waited = 0;
+                while ($waited < 50) {
+                    $fp = @fsockopen('127.0.0.1', $socksPort, $errno, $errstr, 0.1);
+                    if ($fp !== false) {
+                        fclose($fp);
+                        break;
+                    }
+                    usleep(100000);
+                    $waited++;
+                }
+                if ($waited >= 50) {
+                    throw new \RuntimeException('Timeout waiting for SSH dynamic tunnel');
+                }
+
+                $pid = (int) trim((string) shell_exec(
+                    'pgrep -f ' . escapeshellarg('127.0.0.1:' . $socksPort) . ' 2>/dev/null | head -1'
+                ));
+                if ($pid > 0) {
+                    file_put_contents($sshPidFile, (string) $pid);
+                }
+                file_put_contents($sshPortFile, (string) $socksPort);
+                $socksHost = '127.0.0.1';
+            }
+        } elseif (!empty($config['ssh_tunnel']) && $config['ssh_tunnel'] === 'local') {
+            // Local forward mode: bridge each host individually via SSH -L
+            // Parse hosts from URI
+            $hosts = self::parseUriHosts($uri);
+            $mapping = [];
+            foreach ($hosts as $hostPort) {
+                $parts = explode(':', $hostPort);
+                $remoteHost = $parts[0];
+                $remotePort = (int) ($parts[1] ?? 27017);
+
+                $fwdConfig = array_merge($config, ['host' => $remoteHost, 'port' => $remotePort]);
+                $result = self::startSshLocalForward($fwdConfig);
+                if (!$result) {
+                    throw new \RuntimeException("Failed to forward $hostPort via SSH local");
+                }
+                $mapping[$hostPort] = $result['host'] . ':' . $result['port'];
+            }
+
+            foreach ($mapping as $original => $local) {
+                $uri = str_replace($original, $local, $uri);
+            }
+            return $uri;
+        } elseif (!empty($config['socks5_proxy'])) {
+            $proxyParts = explode(':', $config['socks5_proxy']);
+            $socksHost = $proxyParts[0];
+            $socksPort = (int) ($proxyParts[1] ?? 1080);
+        }
+
+        if ($socksPort === 0) {
+            return $uri;
+        }
+
+        // Parse hosts from URI and create a socat bridge for each
+        $hosts = self::parseUriHosts($uri);
+        $socksUser = $config['socks5_user'] ?? '';
+        $socksPass = $config['socks5_pass'] ?? '';
+
+        $mapping = [];
+        foreach ($hosts as $hostPort) {
+            $parts = explode(':', $hostPort);
+            $targetHost = $parts[0];
+            $targetPort = (int) ($parts[1] ?? 27017);
+
+            $result = self::startSocatBridge($socksHost, $socksPort, $targetHost, $targetPort, $socksUser, $socksPass);
+            if (!$result) {
+                throw new \RuntimeException("Failed to create socat bridge for $hostPort");
+            }
+            $mapping[$hostPort] = $result['host'] . ':' . $result['port'];
+        }
+
+        // Replace hosts in URI
+        foreach ($mapping as $original => $local) {
+            $uri = str_replace($original, $local, $uri);
+        }
+
+        return $uri;
+    }
+
+    /**
+     * Extract host:port pairs from a MongoDB URI.
+     */
+    private static function parseUriHosts(string $uri): array
+    {
+        // mongodb://user:pass@host1:port1,host2:port2/db?params
+        $withoutScheme = preg_replace('#^mongodb(\+srv)?://#', '', $uri);
+
+        // Strip user:pass@
+        if (strpos($withoutScheme, '@') !== false) {
+            $withoutScheme = substr($withoutScheme, strpos($withoutScheme, '@') + 1);
+        }
+
+        // Strip /db?params
+        $hostPart = $withoutScheme;
+        if (strpos($hostPart, '/') !== false) {
+            $hostPart = substr($hostPart, 0, strpos($hostPart, '/'));
+        }
+
+        return explode(',', $hostPart);
+    }
 }

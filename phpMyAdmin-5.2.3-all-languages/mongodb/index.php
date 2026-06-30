@@ -30,6 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // If a full URI is configured, use it directly
         if (!empty($srv['uri'])) {
             $uri = $srv['uri'];
+
+            // If tunnel is also configured, we need to bridge through it
+            if (!empty($srv['ssh_tunnel']) || !empty($srv['socks5_proxy'])) {
+                require_once __DIR__ . '/includes/MongoTunnel.php';
+                $uri = MongoTunnel::rewriteUri($uri, $srv);
+            }
         } else {
             $host = $srv['host'];
             $port = (int) $srv['port'];
