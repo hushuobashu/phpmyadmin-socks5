@@ -1,0 +1,37 @@
+<?php
+declare(strict_types=1);
+
+define('MONGO_ROOT', dirname(__DIR__));
+define('PMA_ROOT', dirname(MONGO_ROOT));
+
+$cfg = [];
+
+$configFile = PMA_ROOT . '/config.inc.php';
+if (file_exists($configFile)) {
+    include $configFile;
+}
+
+$mongoServers = $cfg['MongoDB'] ?? [];
+
+$mongoDefaults = [
+    'verbose'        => '',
+    'host'           => 'localhost',
+    'port'           => 27017,
+    'username'       => '',
+    'password'       => '',
+    'auth_database'  => 'admin',
+    'ssh_tunnel'     => '',
+    'ssh_host'       => '',
+    'ssh_port'       => 22,
+    'ssh_user'       => '',
+    'ssh_key'        => '',
+    'ssh_password'   => '',
+    'ssh_extra_args' => '',
+    'socks5_proxy'   => '',
+    'socks5_user'    => '',
+    'socks5_pass'    => '',
+];
+
+foreach ($mongoServers as $idx => $srv) {
+    $mongoServers[$idx] = array_merge($mongoDefaults, $srv);
+}

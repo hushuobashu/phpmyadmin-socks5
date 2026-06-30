@@ -1,0 +1,66 @@
+#mongo-sidebar {
+    font-size: 0.85rem;
+}
+
+#mongo-tree ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+#mongo-tree ul ul {
+    padding-left: 1rem;
+}
+
+#mongo-tree .db-name {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 3px;
+    display: block;
+    color: #333;
+    text-decoration: none;
+}
+
+#mongo-tree .db-name:hover {
+    background: #e9ecef;
+}
+
+#mongo-tree .col-name {
+    display: block;
+    padding: 2px 6px;
+    color: #555;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+#mongo-tree .col-name:hover {
+    background: #e9ecef;
+    color: #000;
+}
+
+#mongo-tree .col-name.active {
+    background: #0d6efd;
+    color: #fff;
+}
+
+.json-viewer {
+    font-family: monospace;
+    font-size: 0.82rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.CodeMirror {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    height: auto;
+    min-height: 200px;
+}
+
+.doc-row td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

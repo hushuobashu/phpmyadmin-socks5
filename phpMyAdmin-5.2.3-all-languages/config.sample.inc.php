@@ -173,3 +173,28 @@ $cfg['SaveDir'] = '';
  * You can find more configuration options in the documentation
  * in the doc/ folder or at <https://docs.phpmyadmin.net/>.
  */
+
+/**
+ * MongoDB Servers configuration
+ * Access at: /mongodb/
+ */
+// $i = 0;
+//
+// $i++;
+// $cfg['MongoDB'][$i]['verbose'] = 'Local MongoDB';
+// $cfg['MongoDB'][$i]['host'] = 'localhost';
+// $cfg['MongoDB'][$i]['port'] = 27017;
+// $cfg['MongoDB'][$i]['username'] = '';
+// $cfg['MongoDB'][$i]['password'] = '';
+// $cfg['MongoDB'][$i]['auth_database'] = 'admin';
+//
+// // SSH tunnel (same options as MySQL servers)
+// // $cfg['MongoDB'][$i]['ssh_tunnel'] = 'local';       // 'local' or 'dynamic'
+// // $cfg['MongoDB'][$i]['ssh_host'] = 'jump.example.com';
+// // $cfg['MongoDB'][$i]['ssh_port'] = 22;
+// // $cfg['MongoDB'][$i]['ssh_user'] = 'deploy';
+// // $cfg['MongoDB'][$i]['ssh_key'] = '/path/to/key';
+//
+// // SOCKS5 proxy
+// // $cfg['MongoDB'][$i]['socks5_proxy'] = '127.0.0.1:1080';
+
