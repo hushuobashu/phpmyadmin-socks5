@@ -89,10 +89,38 @@ function bsonDocToArray($doc): array
 
     $result = [];
     foreach ((array) $doc as $key => $val) {
-        if (is_object($val) && !($val instanceof MongoDB\BSON\ObjectId) && !($val instanceof MongoDB\BSON\UTCDateTime)) {
+        if ($val instanceof MongoDB\BSON\ObjectId) {
+            $result[$key] = ['$oid' => (string) $val];
+        } elseif ($val instanceof MongoDB\BSON\UTCDateTime) {
+            $result[$key] = ['$date' => $val->toDateTime()->format('c')];
+        } elseif (is_object($val) || is_array($val)) {
             $result[$key] = bsonDocToArray($val);
-        } elseif (is_array($val)) {
-            $result[$key] = bsonDocToArray($val);
+        } else {
+            $result[$key] = $val;
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * Convert extended JSON patterns back to BSON types before saving to MongoDB.
+ * {"$oid": "..."} -> MongoDB\BSON\ObjectId
+ * {"$date": "..."} -> MongoDB\BSON\UTCDateTime
+ */
+function jsonDocToBson(array $doc): array
+{
+    $result = [];
+    foreach ($doc as $key => $val) {
+        if (is_array($val)) {
+            if (isset($val['$oid']) && count($val) === 1) {
+                $result[$key] = new MongoDB\BSON\ObjectId($val['$oid']);
+            } elseif (isset($val['$date']) && count($val) === 1) {
+                $ts = strtotime($val['$date']);
+                $result[$key] = new MongoDB\BSON\UTCDateTime($ts !== false ? $ts * 1000 : 0);
+            } else {
+                $result[$key] = jsonDocToBson($val);
+            }
         } else {
             $result[$key] = $val;
         }

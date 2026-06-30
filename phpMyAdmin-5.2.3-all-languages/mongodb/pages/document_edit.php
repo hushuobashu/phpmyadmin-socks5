@@ -53,6 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Invalid JSON: ' . json_last_error_msg();
         $jsonContent = $jsonInput;
     } else {
+        // Convert extended JSON ($oid, $date) back to BSON types
+        $document = jsonDocToBson($document);
+
         try {
             if ($mode === 'insert') {
                 $conn->insertOne($currentDb, $currentCol, $document);
@@ -63,11 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($document['_id']);
 
                 $filter = [];
-                if ($updateId instanceof MongoDB\BSON\ObjectId || (is_string($updateId) && preg_match('/^[a-f0-9]{24}$/', $updateId))) {
-                    $oid = is_string($updateId) ? new MongoDB\BSON\ObjectId($updateId) : $updateId;
-                    $filter = ['_id' => $oid];
-                } elseif (is_array($updateId) && isset($updateId['$oid'])) {
-                    $filter = ['_id' => new MongoDB\BSON\ObjectId($updateId['$oid'])];
+                if ($updateId instanceof MongoDB\BSON\ObjectId) {
+                    $filter = ['_id' => $updateId];
+                } elseif (is_string($updateId) && preg_match('/^[a-f0-9]{24}$/', $updateId)) {
+                    $filter = ['_id' => new MongoDB\BSON\ObjectId($updateId)];
                 } else {
                     $filter = ['_id' => $updateId];
                 }
