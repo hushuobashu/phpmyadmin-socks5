@@ -1,14 +1,13 @@
 <?php
 declare(strict_types=1);
 
-$pageTitle = $pageTitle ?? 'MongoDB Admin';
+$pageTitle = $pageTitle ?? 'SQLite Admin';
 $currentDb = $currentDb ?? ($_GET['db'] ?? '');
-$currentCol = $currentCol ?? ($_GET['col'] ?? '');
+$currentTable = $currentTable ?? ($_GET['table'] ?? '');
 
 require_once __DIR__ . '/helpers.php';
 
-// Compute absolute base paths
-$mongoBase = '/mongodb';
+$sqliteBase = '/sqlite';
 $pmaBase = '';
 ?>
 <!DOCTYPE html>
@@ -19,27 +18,26 @@ $pmaBase = '';
     <title><?= h($pageTitle) ?></title>
     <link rel="stylesheet" href="<?= $pmaBase ?>/themes/pmahomme/css/theme.css">
     <link rel="stylesheet" href="<?= $pmaBase ?>/js/vendor/codemirror/lib/codemirror.css">
-    <link rel="stylesheet" href="<?= $mongoBase ?>/assets/mongodb.css">
+    <link rel="stylesheet" href="<?= $sqliteBase ?>/assets/sqlite.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <a class="navbar-brand" href="<?= $mongoBase ?>/pages/databases.php">
-            <strong>MongoDB</strong>
+        <a class="navbar-brand" href="<?= $sqliteBase ?>/pages/databases.php">
+            <strong>SQLite</strong>
         </a>
         <span class="navbar-text text-light me-auto ms-3">
-            <?= h(mongoGetServerLabel()) ?>
+            <?= h(sqliteGetServerLabel()) ?>
         </span>
-        <a href="<?= $mongoBase ?>/pages/server_info.php" class="btn btn-outline-light btn-sm me-2">Server Info</a>
         <a href="<?= $pmaBase ?>/index.php" class="btn btn-outline-secondary btn-sm me-2">MySQL</a>
-        <a href="/sqlite/pages/databases.php" class="btn btn-outline-secondary btn-sm me-2">SQLite</a>
-        <a href="<?= $mongoBase ?>/logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
+        <a href="/mongodb/pages/databases.php" class="btn btn-outline-secondary btn-sm me-2">MongoDB</a>
+        <a href="<?= $sqliteBase ?>/logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
     </nav>
 
     <div class="container-fluid mt-0">
         <div class="row">
             <!-- Sidebar -->
-            <nav id="mongo-sidebar" class="col-md-2 pt-3 border-end bg-light" style="min-height: calc(100vh - 56px); overflow-y: auto;">
-                <div id="mongo-tree">Loading...</div>
+            <nav id="sqlite-sidebar" class="col-md-2 pt-3 border-end bg-light" style="min-height: calc(100vh - 56px); overflow-y: auto;">
+                <div id="sqlite-tree">Loading...</div>
             </nav>
 
             <!-- Main content -->
@@ -47,18 +45,18 @@ $pmaBase = '';
                 <!-- Breadcrumb -->
                 <nav aria-label="breadcrumb" class="mb-3">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="<?= $mongoBase ?>/pages/databases.php">Databases</a></li>
+                        <li class="breadcrumb-item"><a href="<?= $sqliteBase ?>/pages/databases.php">Databases</a></li>
 <?php if ($currentDb): ?>
-                        <li class="breadcrumb-item"><a href="<?= $mongoBase ?>/pages/collections.php?db=<?= urlencode($currentDb) ?>"><?= h($currentDb) ?></a></li>
+                        <li class="breadcrumb-item"><a href="<?= $sqliteBase ?>/pages/tables.php?db=<?= urlencode($currentDb) ?>"><?= h(basename($currentDb)) ?></a></li>
 <?php endif; ?>
-<?php if ($currentCol): ?>
-                        <li class="breadcrumb-item active"><?= h($currentCol) ?></li>
+<?php if ($currentTable): ?>
+                        <li class="breadcrumb-item active"><?= h($currentTable) ?></li>
 <?php endif; ?>
                     </ol>
                 </nav>
 
                 <!-- Flash messages -->
-<?php foreach (mongoFlashMessages() as $msg): ?>
+<?php foreach (sqliteFlashMessages() as $msg): ?>
                 <div class="alert alert-<?= h($msg['type']) ?> alert-dismissible fade show" role="alert">
                     <?= h($msg['message']) ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>

@@ -204,3 +204,29 @@ $cfg['SaveDir'] = '';
 // // SOCKS5 proxy
 // // $cfg['MongoDB'][$i]['socks5_proxy'] = '127.0.0.1:1080';
 
+/**
+ * SQLite configuration
+ * Access at: /sqlite/
+ */
+// $cfg['SQLitePassword'] = '';  // Access password (leave empty for no password)
+//
+// $i = 0;
+//
+// // Local mode
+// $i++;
+// $cfg['SQLite'][$i]['verbose'] = 'Local databases';
+// $cfg['SQLite'][$i]['mode'] = 'local';
+// $cfg['SQLite'][$i]['directories'] = ['/path/to/sqlite/files'];
+//
+// // SSH remote mode
+// $i++;
+// $cfg['SQLite'][$i]['verbose'] = 'Production server';
+// $cfg['SQLite'][$i]['mode'] = 'ssh';
+// $cfg['SQLite'][$i]['directories'] = ['/var/www/app/database'];
+// $cfg['SQLite'][$i]['ssh_host'] = 'server.example.com';
+// $cfg['SQLite'][$i]['ssh_port'] = 22;
+// $cfg['SQLite'][$i]['ssh_user'] = 'deploy';
+// $cfg['SQLite'][$i]['ssh_key'] = '/path/to/private_key';
+// $cfg['SQLite'][$i]['ssh_password'] = '';         // requires sshpass
+// $cfg['SQLite'][$i]['ssh_proxy'] = '';            // ProxyJump (user@host:port)
+
