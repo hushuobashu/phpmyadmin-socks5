@@ -20,8 +20,14 @@ function mongoVerifyCsrf(): void
     $token = $_POST['_csrf'] ?? '';
     if (!hash_equals(mongoCsrfToken(), $token)) {
         http_response_code(403);
-        die('CSRF token mismatch');
+        die(__('csrf_mismatch'));
     }
+}
+
+function __($key, ...$args): string
+{
+    $text = $GLOBALS['_lang'][$key] ?? $key;
+    return $args ? sprintf($text, ...$args) : $text;
 }
 
 function mongoFlash(string $message, string $type = 'success'): void

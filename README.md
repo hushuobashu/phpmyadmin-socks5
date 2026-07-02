@@ -1,6 +1,6 @@
 # phpmyadmin-socks5
 
-A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support for MySQL connections.
+A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support for MySQL connections, plus built-in SQLite and MongoDB admin modules.
 
 [中文文档](README_zh.md)
 
@@ -12,7 +12,25 @@ A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support 
 - SOCKS5 username/password authentication
 - SSH private key and password authentication
 - Persistent tunnels — SSH/socat processes survive across HTTP requests, automatically reused for the same connection config
+- **SQLite Admin** — Built-in SQLite database browser with query, export, and structure management
+- **MongoDB Admin** — Built-in MongoDB admin panel with query, indexes, export, and server info
+- Multi-language support (English / Chinese) for SQLite and MongoDB modules
 - Non-invasive — behaves exactly like stock phpMyAdmin when proxy/tunnel is not configured
+
+## Quick Start
+
+Use PHP's built-in web server for local development:
+
+```bash
+cd phpMyAdmin-5.2.3-all-languages
+php -S localhost:9999
+```
+
+Then open in your browser:
+
+- MySQL (phpMyAdmin): http://localhost:9999/
+- SQLite Admin: http://localhost:9999/sqlite/
+- MongoDB Admin: http://localhost:9999/mongodb/
 
 ## Requirements
 
@@ -20,6 +38,8 @@ A modified version of phpMyAdmin 5.2.3 with SOCKS5 proxy and SSH tunnel support 
 - `socat` 1.8+ (required for SOCKS5 proxy mode and SSH dynamic mode)
 - `ssh` (required for SSH tunnel mode, usually pre-installed)
 - `sshpass` (only required for SSH password authentication)
+- PHP `sqlite3` extension (for SQLite module)
+- PHP `mongodb` extension (for MongoDB module)
 
 ## Configuration
 
@@ -101,3 +121,77 @@ phpMyAdmin → Unix socket → socat → SSH SOCKS5 proxy → MySQL server
 ## Based On
 
 - [phpMyAdmin 5.2.3](https://www.phpmyadmin.net/) (all-languages)
+
+## SQLite Module
+
+The built-in SQLite admin module supports:
+
+- Browse databases and tables
+- View and edit table structure
+- Query with SQL editor (CodeMirror)
+- Export tables (SQL / CSV)
+- Multi-server support via `config.inc.php`
+- English / Chinese UI
+
+### SQLite Configuration
+
+```php
+$cfg['SQLite'][0] = [
+    'verbose'  => 'My Local DB',
+    'mode'     => 'file',
+    'path'     => '/path/to/database.sqlite',
+];
+
+$cfg['SQLite'][1] = [
+    'verbose'  => 'Another DB',
+    'mode'     => 'file',
+    'path'     => '/path/to/another.db',
+];
+```
+
+## MongoDB Module
+
+The built-in MongoDB admin module supports:
+
+- Browse databases, collections, and documents
+- Query with Find and Aggregate (JSON editor)
+- Index management (create / drop)
+- Collection statistics
+- Export (JSON / CSV)
+- Server info dashboard
+- SSH tunnel and SOCKS5 proxy support
+- Multi-server support via `config.inc.php`
+- English / Chinese UI
+
+### MongoDB Configuration
+
+```php
+$cfg['MongoDB'][1] = [
+    'verbose'       => 'Local MongoDB',
+    'host'          => '127.0.0.1',
+    'port'          => 27017,
+    'username'      => '',
+    'password'      => '',
+    'auth_database' => 'admin',
+];
+
+// Connect via URI
+$cfg['MongoDB'][2] = [
+    'verbose' => 'Atlas Cluster',
+    'uri'     => 'mongodb+srv://user:pass@cluster.mongodb.net/mydb',
+];
+
+// Connect via SSH tunnel
+$cfg['MongoDB'][3] = [
+    'verbose'    => 'Production (via SSH)',
+    'host'       => '10.0.0.50',
+    'port'       => 27017,
+    'username'   => 'admin',
+    'password'   => 'secret',
+    'ssh_tunnel' => 'local',
+    'ssh_host'   => 'jump.example.com',
+    'ssh_port'   => 22,
+    'ssh_user'   => 'deploy',
+    'ssh_key'    => '/path/to/private_key',
+];
+```

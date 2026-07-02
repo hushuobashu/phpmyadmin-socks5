@@ -35,7 +35,7 @@ if ($mode !== 'insert' && $docId !== '') {
             $doc = bsonDocToArray($docs[0]);
             $jsonContent = json_encode($doc, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         } else {
-            $error = 'Document not found.';
+            $error = __('document_not_found');
         }
     } catch (Exception $e) {
         $error = $e->getMessage();
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $document = json_decode($jsonInput, true);
 
     if ($document === null && json_last_error() !== JSON_ERROR_NONE) {
-        $error = 'Invalid JSON: ' . json_last_error_msg();
+        $error = __('invalid_json', json_last_error_msg());
         $jsonContent = $jsonInput;
     } else {
         // Convert extended JSON ($oid, $date) back to BSON types
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             if ($mode === 'insert') {
                 $conn->insertOne($currentDb, $currentCol, $document);
-                mongoFlash('Document inserted.');
+                mongoFlash(__('document_inserted'));
             } else {
                 // For update: remove _id from replacement, use it as filter
                 $updateId = $document['_id'] ?? null;
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $conn->replaceOne($currentDb, $currentCol, $filter, $document);
-                mongoFlash('Document updated.');
+                mongoFlash(__('document_updated'));
             }
 
             header('Location: documents.php?db=' . urlencode($currentDb) . '&col=' . urlencode($currentCol));
@@ -87,11 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = ($mode === 'insert' ? 'Insert' : 'Edit') . ' Document';
+$pageTitle = ($mode === 'insert' ? __('insert_new_document') : __('edit_document'));
 require_once __DIR__ . '/../includes/layout_header.php';
 ?>
 
-<h4><?= $mode === 'insert' ? 'Insert Document' : 'Edit Document' ?></h4>
+<h4><?= $mode === 'insert' ? __('insert_new_document') : __('edit_document') ?></h4>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?= h($error) ?></div>
@@ -104,8 +104,8 @@ require_once __DIR__ . '/../includes/layout_header.php';
         <div id="codemirror-wrapper"></div>
     </div>
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><?= $mode === 'insert' ? 'Insert' : 'Save' ?></button>
-        <a href="documents.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary"><?= $mode === 'insert' ? __('insert') : __('save') ?></button>
+        <a href="documents.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>" class="btn btn-secondary"><?= __('cancel') ?></a>
     </div>
 </form>
 

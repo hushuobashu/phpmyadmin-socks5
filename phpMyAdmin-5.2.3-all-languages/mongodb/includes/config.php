@@ -36,3 +36,15 @@ $mongoDefaults = [
 foreach ($mongoServers as $idx => $srv) {
     $mongoServers[$idx] = array_merge($mongoDefaults, $srv);
 }
+
+// i18n
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('phpMongoAdmin');
+    session_start();
+}
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'zh'], true)) {
+    $_SESSION['mongo_lang'] = $_GET['lang'];
+}
+$GLOBALS['_mongo_lang_code'] = $_SESSION['mongo_lang'] ?? 'en';
+$GLOBALS['_lang'] = require MONGO_ROOT . '/lang/' . $GLOBALS['_mongo_lang_code'] . '.php';
+

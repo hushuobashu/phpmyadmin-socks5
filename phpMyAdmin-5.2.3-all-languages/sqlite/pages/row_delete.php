@@ -26,7 +26,7 @@ $quotedTable = '"' . str_replace('"', '""', $currentTable) . '"';
 
 try {
     $driver->exec($currentDb, 'DELETE FROM ' . $quotedTable . ' WHERE rowid = ' . (int) $rowid);
-    sqliteFlash('Row deleted.');
+    sqliteFlash(__('row_deleted'));
 } catch (\Exception $e) {
     sqliteFlash($e->getMessage(), 'danger');
 }

@@ -17,7 +17,7 @@ if (empty($currentDb) || empty($currentCol)) {
     exit;
 }
 
-$pageTitle = $currentCol . ' - Documents';
+$pageTitle = $currentCol . ' - ' . __('documents');
 require_once __DIR__ . '/../includes/layout_header.php';
 
 try {
@@ -52,13 +52,21 @@ foreach ($allKeys as $k) {
 }
 ?>
 
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" href="documents.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('browse') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="query.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('query') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="indexes.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('indexes') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="collection_stats.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('stats') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="export.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('export') ?></a></li>
+</ul>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><?= h($currentCol) ?> <small class="text-muted">(<?= number_format($total) ?> documents)</small></h4>
-    <a href="document_edit.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&mode=insert" class="btn btn-sm btn-success">Insert Document</a>
+    <h4><?= h($currentCol) ?> <small class="text-muted">(<?= number_format($total) ?> <?= __('documents') ?>)</small></h4>
+    <a href="document_edit.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&mode=insert" class="btn btn-sm btn-success"><?= __('insert_document') ?></a>
 </div>
 
 <?php if (empty($docs)): ?>
-    <div class="alert alert-info">No documents found.</div>
+    <div class="alert alert-info"><?= __('no_documents_found') ?></div>
 <?php else: ?>
 <div class="table-responsive">
 <table class="table table-striped table-hover table-sm">
@@ -67,7 +75,7 @@ foreach ($allKeys as $k) {
 <?php foreach ($columns as $col): ?>
             <th><?= h($col) ?></th>
 <?php endforeach; ?>
-            <th>Actions</th>
+            <th><?= __('actions') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -103,13 +111,13 @@ foreach ($allKeys as $k) {
             <td><?= $display ?></td>
 <?php endforeach; ?>
             <td class="text-nowrap">
-                <a href="document_edit.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&id=<?= urlencode($idVal) ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                <form method="post" action="document_delete.php" style="display:inline" onsubmit="return confirm('Delete this document?');">
+                <a href="document_edit.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&id=<?= urlencode($idVal) ?>" class="btn btn-sm btn-outline-primary"><?= __('edit') ?></a>
+                <form method="post" action="document_delete.php" style="display:inline" onsubmit="return confirm(<?= h(json_encode(__('confirm_delete_document'))) ?>);">
                     <?= mongoCsrfField() ?>
                     <input type="hidden" name="db" value="<?= h($currentDb) ?>">
                     <input type="hidden" name="col" value="<?= h($currentCol) ?>">
                     <input type="hidden" name="id" value="<?= h($idVal) ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Del</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><?= __('delete') ?></button>
                 </form>
             </td>
         </tr>
@@ -123,7 +131,7 @@ foreach ($allKeys as $k) {
 <nav>
     <ul class="pagination pagination-sm">
         <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&page=<?= $page - 1 ?>">Prev</a>
+            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&page=<?= $page - 1 ?>"><?= __('prev') ?></a>
         </li>
 <?php for ($i = max(1, $page - 3); $i <= min($totalPages, $page + 3); $i++): ?>
         <li class="page-item <?= $i === $page ? 'active' : '' ?>">
@@ -131,7 +139,7 @@ foreach ($allKeys as $k) {
         </li>
 <?php endfor; ?>
         <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&page=<?= $page + 1 ?>">Next</a>
+            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>&page=<?= $page + 1 ?>"><?= __('next') ?></a>
         </li>
     </ul>
 </nav>

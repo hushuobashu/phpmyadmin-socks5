@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!empty($_FILES['sqlfile']['tmp_name'])) {
         $content = file_get_contents($_FILES['sqlfile']['tmp_name']);
         if ($content === false || $content === '') {
-            $error = 'Failed to read uploaded file or file is empty.';
+            $error = __('file_read_error');
         } else {
             try {
                 $driver->exec($currentDb, $content);
-                $success = 'SQL file imported successfully.';
+                $success = __('sql_imported');
             } catch (\Exception $e) {
                 $error = $e->getMessage();
             }
@@ -34,20 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!empty($_POST['sql'])) {
         try {
             $driver->exec($currentDb, $_POST['sql']);
-            $success = 'SQL executed successfully.';
+            $success = __('sql_executed');
         } catch (\Exception $e) {
             $error = $e->getMessage();
         }
     } else {
-        $error = 'No file or SQL provided.';
+        $error = __('no_sql_provided');
     }
 }
 
-$pageTitle = basename($currentDb) . ' - Import';
+$pageTitle = basename($currentDb) . ' - ' . __('import');
 require_once __DIR__ . '/../includes/layout_header.php';
 ?>
 
-<h4>Import into <code><?= h(basename($currentDb)) ?></code></h4>
+<h4><?= __('import_into') ?> <code><?= h(basename($currentDb)) ?></code></h4>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?= h($error) ?></div>
@@ -57,33 +57,33 @@ require_once __DIR__ . '/../includes/layout_header.php';
 <?php endif; ?>
 
 <div class="card mb-4">
-    <div class="card-header">Upload SQL File</div>
+    <div class="card-header"><?= __('upload_sql_file') ?></div>
     <div class="card-body">
         <form method="post" enctype="multipart/form-data">
             <?= sqliteCsrfField() ?>
             <div class="mb-3">
                 <input type="file" name="sqlfile" class="form-control" accept=".sql,.txt">
             </div>
-            <button type="submit" class="btn btn-primary">Import</button>
+            <button type="submit" class="btn btn-primary"><?= __('import') ?></button>
         </form>
     </div>
 </div>
 
 <div class="card">
-    <div class="card-header">Paste SQL</div>
+    <div class="card-header"><?= __('paste_sql') ?></div>
     <div class="card-body">
         <form method="post">
             <?= sqliteCsrfField() ?>
             <div class="mb-3">
-                <textarea name="sql" class="form-control font-monospace" rows="8" placeholder="Paste SQL here..."></textarea>
+                <textarea name="sql" class="form-control font-monospace" rows="8" placeholder="<?= __('paste_sql_here') ?>"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Execute</button>
+            <button type="submit" class="btn btn-primary"><?= __('execute') ?></button>
         </form>
     </div>
 </div>
 
 <div class="mt-3">
-    <a href="tables.php?db=<?= urlencode($currentDb) ?>" class="btn btn-outline-secondary">Back to Tables</a>
+    <a href="tables.php?db=<?= urlencode($currentDb) ?>" class="btn btn-outline-secondary"><?= __('back_to_tables') ?></a>
 </div>
 
 <?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>

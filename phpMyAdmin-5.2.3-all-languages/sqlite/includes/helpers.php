@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+function __($key, ...$args): string
+{
+    $text = $GLOBALS['_lang'][$key] ?? $key;
+    return $args ? sprintf($text, ...$args) : $text;
+}
+
 function sqliteCsrfToken(): string
 {
     if (empty($_SESSION['sqlite_csrf'])) {
@@ -20,7 +26,7 @@ function sqliteVerifyCsrf(): void
     $token = $_POST['_csrf'] ?? '';
     if (!hash_equals(sqliteCsrfToken(), $token)) {
         http_response_code(403);
-        die('CSRF token mismatch');
+        die(__('csrf_mismatch'));
     }
 }
 

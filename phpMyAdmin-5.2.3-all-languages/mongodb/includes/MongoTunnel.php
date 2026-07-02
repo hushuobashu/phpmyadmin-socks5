@@ -17,6 +17,16 @@ class MongoTunnel
         return posix_kill($pid, 0);
     }
 
+    private static function isTcpAlive(int $port): bool
+    {
+        $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.5);
+        if ($fp !== false) {
+            fclose($fp);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Start SSH local forward tunnel, returning a local TCP port.
      * MongoDB Driver needs TCP, not Unix sockets.
@@ -37,12 +47,11 @@ class MongoTunnel
         if (file_exists($pidFile) && file_exists($portFile)) {
             $pid = (int) file_get_contents($pidFile);
             $port = (int) file_get_contents($portFile);
-            if (self::isProcessAlive($pid) && $port > 0) {
-                $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.5);
-                if ($fp !== false) {
-                    fclose($fp);
-                    return ['host' => '127.0.0.1', 'port' => $port];
-                }
+            if (self::isProcessAlive($pid) && $port > 0 && self::isTcpAlive($port)) {
+                return ['host' => '127.0.0.1', 'port' => $port];
+            }
+            if ($pid > 0) {
+                @posix_kill($pid, 9);
             }
             @unlink($pidFile);
             @unlink($portFile);
@@ -109,7 +118,10 @@ class MongoTunnel
         if (file_exists($sshPidFile) && file_exists($sshPortFile)) {
             $pid = (int) file_get_contents($sshPidFile);
             $socksPort = (int) file_get_contents($sshPortFile);
-            if (!self::isProcessAlive($pid) || $socksPort <= 0) {
+            if (!self::isProcessAlive($pid) || $socksPort <= 0 || !self::isTcpAlive($socksPort)) {
+                if ($pid > 0) {
+                    @posix_kill($pid, 9);
+                }
                 @unlink($sshPidFile);
                 @unlink($sshPortFile);
                 $socksPort = 0;
@@ -189,12 +201,11 @@ class MongoTunnel
         if (file_exists($pidFile) && file_exists($portFile)) {
             $pid = (int) file_get_contents($pidFile);
             $port = (int) file_get_contents($portFile);
-            if (self::isProcessAlive($pid) && $port > 0) {
-                $fp = @fsockopen('127.0.0.1', $port, $errno, $errstr, 0.5);
-                if ($fp !== false) {
-                    fclose($fp);
-                    return ['host' => '127.0.0.1', 'port' => $port];
-                }
+            if (self::isProcessAlive($pid) && $port > 0 && self::isTcpAlive($port)) {
+                return ['host' => '127.0.0.1', 'port' => $port];
+            }
+            if ($pid > 0) {
+                @posix_kill($pid, 9);
             }
             @unlink($pidFile);
             @unlink($portFile);
@@ -260,7 +271,7 @@ class MongoTunnel
             . ' -o ExitOnForwardFailure=yes'
             . ' -o StrictHostKeyChecking=accept-new'
             . ' -o ConnectTimeout=10'
-            . ' -o ServerAliveInterval=60'
+            . ' -o ServerAliveInterval=30'
             . ' -o ServerAliveCountMax=3';
         $cmd .= ' ' . $tunnelArgs;
         $cmd .= ' -p ' . $sshPort;
@@ -335,10 +346,13 @@ class MongoTunnel
             if (file_exists($sshPidFile) && file_exists($sshPortFile)) {
                 $pid = (int) file_get_contents($sshPidFile);
                 $port = (int) file_get_contents($sshPortFile);
-                if (self::isProcessAlive($pid) && $port > 0) {
+                if (self::isProcessAlive($pid) && $port > 0 && self::isTcpAlive($port)) {
                     $socksHost = '127.0.0.1';
                     $socksPort = $port;
                 } else {
+                    if ($pid > 0) {
+                        @posix_kill($pid, 9);
+                    }
                     @unlink($sshPidFile);
                     @unlink($sshPortFile);
                 }

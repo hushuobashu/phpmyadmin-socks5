@@ -7,12 +7,12 @@ require_once __DIR__ . '/../includes/session.php';
 header('Content-Type: application/json');
 
 if (!sqliteIsLoggedIn()) {
-    echo json_encode(['error' => 'Not authenticated']);
+    echo json_encode(['error' => __('not_authenticated')]);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['error' => 'POST required']);
+    echo json_encode(['error' => __('post_required')]);
     exit;
 }
 
@@ -25,7 +25,7 @@ $value = array_key_exists('value', $_POST) ? $_POST['value'] : '';
 $isNull = ($_POST['is_null'] ?? '0') === '1';
 
 if ($db === '' || $table === '' || $rowid === '' || $column === '') {
-    echo json_encode(['error' => 'Missing required parameters']);
+    echo json_encode(['error' => __('missing_params')]);
     exit;
 }
 

@@ -1,5 +1,5 @@
 #mongo-sidebar {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 
 #mongo-tree ul {
@@ -23,7 +23,7 @@
 }
 
 #mongo-tree .db-name:hover {
-    background: #e9ecef;
+    background: #ddd;
 }
 
 #mongo-tree .col-name {
@@ -35,13 +35,24 @@
 }
 
 #mongo-tree .col-name:hover {
-    background: #e9ecef;
+    background: #ddd;
     color: #000;
 }
 
 #mongo-tree .col-name.active {
-    background: #0d6efd;
+    background: #235a81;
     color: #fff;
+}
+
+/* Server selector in sidebar */
+#serverChoice {
+    text-align: center;
+    padding: 0 10px 8px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 8px;
+}
+#serverChoice select {
+    width: 100%;
 }
 
 .json-viewer {
@@ -52,8 +63,8 @@
 }
 
 .CodeMirror {
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    border: 1px solid #aaa;
+    border-radius: 2px;
     height: auto;
     min-height: 200px;
 }
@@ -63,4 +74,270 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* === phpMyAdmin pmahomme style overrides === */
+
+body {
+    font-size: 0.82rem;
+    color: #444;
+}
+
+/* Links */
+a { color: #235a81; }
+a:hover { color: #1a4563; }
+
+/* Navbar */
+.navbar.navbar-dark {
+    background: #888 !important;
+    border-bottom: 1px solid #777;
+}
+.navbar .navbar-brand {
+    text-shadow: 0 1px 0 #000;
+    color: #fff;
+}
+.navbar .navbar-text {
+    text-shadow: 0 1px 0 #000;
+}
+
+/* Sidebar */
+#mongo-sidebar {
+    background: linear-gradient(to right, #f3f3f3, #dadcde) !important;
+    border-color: #ccc !important;
+}
+
+/* Tables */
+.table thead th {
+    background: linear-gradient(#fff, #ccc) !important;
+    border-right: 1px solid #fff;
+    text-shadow: 0 1px 0 #fff;
+    color: #000;
+    font-size: 0.82rem;
+}
+.table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: #dfdfdf;
+}
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: #fff;
+}
+.table-hover > tbody > tr:hover > * {
+    background: linear-gradient(#ced6df, #b6c6d7) !important;
+}
+.table {
+    border-collapse: collapse;
+}
+.table td, .table th {
+    padding: 0.2em 0.4em;
+    border-width: 0;
+}
+
+/* Nav tabs */
+.nav-tabs {
+    border-bottom-color: #aaa;
+}
+.nav-tabs .nav-link {
+    background: #f2f2f2;
+    color: #555;
+    border-color: #d5d5d5 #d5d5d5 #aaa;
+    font-weight: bold;
+    font-size: 0.82rem;
+    margin-right: 0.3em;
+    padding: 6px 10px;
+}
+.nav-tabs .nav-link:hover {
+    background: #e5e5e5;
+    border-color: #ccc #ccc #aaa;
+}
+.nav-tabs .nav-link.active {
+    background: #fff;
+    color: #235a81;
+    border-color: #aaa #aaa #fff;
+    border-bottom-color: #fff;
+}
+.nav-tabs .nav-link.text-danger {
+    background: #f2f2f2;
+}
+.nav-tabs .nav-link.text-danger:hover {
+    background: #fde8e8;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+    background: linear-gradient(#f8f8f8, #d8d8d8) !important;
+    border-color: #aaa !important;
+    color: #444 !important;
+    text-shadow: 0 1px 0 #fff;
+    font-weight: bold;
+    border-radius: 0.85rem;
+}
+.btn-primary:hover,
+.btn-secondary:hover {
+    background: linear-gradient(#fff, #ddd) !important;
+    border-color: #999 !important;
+}
+.btn-outline-primary {
+    color: #235a81 !important;
+    border-color: #aaa !important;
+    font-weight: bold;
+}
+.btn-outline-primary:hover {
+    background: #e5e5e5 !important;
+    color: #235a81 !important;
+    border-color: #999 !important;
+}
+.btn-outline-secondary {
+    color: #444 !important;
+    border-color: #aaa !important;
+}
+.btn-outline-secondary:hover {
+    background: #e5e5e5 !important;
+    color: #333 !important;
+}
+.btn-success {
+    background: linear-gradient(#74b974, #4e9a4e) !important;
+    border-color: #4a8c4a !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    font-weight: bold;
+}
+.btn-success:hover {
+    background: linear-gradient(#82c882, #5aaa5a) !important;
+}
+.btn-outline-danger {
+    border-color: #aaa !important;
+    color: #dc3545 !important;
+}
+.btn-outline-danger:hover {
+    background: #fde8e8 !important;
+    border-color: #dc3545 !important;
+}
+.btn-outline-info {
+    border-color: #aaa !important;
+    color: #235a81 !important;
+}
+.btn-outline-info:hover {
+    background: #e8eef1 !important;
+    border-color: #3a6c7e !important;
+}
+.btn-outline-success {
+    border-color: #aaa !important;
+    color: #198754 !important;
+}
+.btn-outline-success:hover {
+    background: #ebf8e8 !important;
+}
+.btn-outline-dark {
+    border-color: #aaa !important;
+    color: #333 !important;
+}
+.btn-outline-dark:hover {
+    background: #e5e5e5 !important;
+}
+.btn-outline-light {
+    border-color: rgba(255,255,255,0.5) !important;
+    color: #fff !important;
+}
+.btn-outline-light:hover {
+    background: rgba(255,255,255,0.2) !important;
+}
+
+/* Cards */
+.card {
+    border-color: #aaa;
+}
+.card-header {
+    background: #eee;
+    border-bottom-color: #aaa;
+    font-weight: bold;
+    color: #444;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+}
+.breadcrumb a {
+    color: #235a81;
+}
+
+/* Pagination */
+.page-link {
+    background: linear-gradient(#fff, #e0e0e0);
+    border-color: #aaa;
+    color: #235a81;
+    font-size: 0.82rem;
+}
+.page-link:hover {
+    background: linear-gradient(#f0f0f0, #d0d0d0);
+    color: #1a4563;
+}
+.page-item.active .page-link {
+    background: linear-gradient(#bbb, #fff);
+    color: #235a81;
+    border-color: #aaa;
+}
+
+/* Alerts */
+.alert-success {
+    background: #ebf8a4;
+    border-color: #a2d246;
+    color: #000;
+}
+.alert-danger {
+    background: #fce4e4;
+    border-color: #c33;
+    color: #000;
+}
+.alert-info {
+    background: #e8eef1;
+    border-color: #3a6c7e;
+    color: #000;
+}
+.alert-warning {
+    background: #fff3cd;
+    border-color: #d4a017;
+    color: #000;
+}
+
+/* Forms */
+.form-control,
+.form-select {
+    border-color: #aaa;
+    border-radius: 2px;
+    color: #555;
+    padding: 4px 8px;
+    font-size: 0.82rem;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: #7c7c7c;
+    box-shadow: 0 1px 3px #aaa;
+}
+
+/* Headings */
+h4 {
+    font-weight: bold;
+    color: #333;
+    font-size: 1.1rem;
+}
+h5 {
+    font-weight: bold;
+    color: #444;
+    font-size: 0.95rem;
+}
+
+/* Badges */
+.badge.bg-secondary {
+    background: #d3dce3 !important;
+    color: #333 !important;
+}
+
+/* Language switch buttons in navbar */
+.navbar .btn-light {
+    background: #fff !important;
+    border-color: #aaa !important;
+    color: #333 !important;
 }

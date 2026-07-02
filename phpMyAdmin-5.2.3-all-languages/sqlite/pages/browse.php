@@ -19,7 +19,7 @@ if (empty($currentDb) || empty($currentTable)) {
     exit;
 }
 
-$pageTitle = $currentTable . ' - Browse';
+$pageTitle = $currentTable . ' - ' . __('browse');
 require_once __DIR__ . '/../includes/layout_header.php';
 
 $quotedTable = '"' . str_replace('"', '""', $currentTable) . '"';
@@ -51,12 +51,27 @@ $colNames = array_column($columns, 'name');
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><?= h($currentTable) ?> <small class="text-muted">(<?= number_format($total) ?> rows)</small> <small class="text-muted fs-6"><?= h($currentDb) ?></small></h4>
-    <a href="row_edit.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&mode=insert" class="btn btn-sm btn-success">Insert Row</a>
+    <h4><?= h($currentTable) ?> <small class="text-muted">(<?= number_format($total) ?> <?= __('rows') ?>)</small> <small class="text-muted fs-6"><?= h($currentDb) ?></small></h4>
+    <a href="row_edit.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&mode=insert" class="btn btn-sm btn-success"><?= __('insert_row') ?></a>
 </div>
 
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link active" href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('browse') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="structure.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('structure') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('query') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="export.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('export') ?></a></li>
+    <li class="nav-item">
+        <form method="post" action="tables.php?db=<?= urlencode($currentDb) ?>" style="display:inline" onsubmit="return confirm(<?= h(json_encode(__('confirm_drop_table', $currentTable))) ?>);">
+            <?= sqliteCsrfField() ?>
+            <input type="hidden" name="action" value="drop">
+            <input type="hidden" name="table_name" value="<?= h($currentTable) ?>">
+            <button type="submit" class="nav-link text-danger"><?= __('drop') ?></button>
+        </form>
+    </li>
+</ul>
+
 <?php if (empty($rows)): ?>
-    <div class="alert alert-info">No data found.</div>
+    <div class="alert alert-info"><?= __('no_data_found') ?></div>
 <?php else: ?>
 <div class="table-responsive">
 <table class="table table-striped table-hover table-sm">
@@ -73,7 +88,7 @@ $colNames = array_column($columns, 'name');
                 <a href="?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&sort=<?= urlencode($col) ?>&dir=<?= $nextDir ?>&page=1" class="text-decoration-none"><?= h($col) ?><?= $arrow ?></a>
             </th>
 <?php endforeach; ?>
-            <th>Actions</th>
+            <th><?= __('actions') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -96,13 +111,13 @@ $colNames = array_column($columns, 'name');
             <td class="editable-cell" data-col="<?= h($col) ?>" data-value="<?= h($rawVal) ?>" data-null="<?= $isNull ? '1' : '0' ?>"><?= $display ?></td>
 <?php endforeach; ?>
             <td class="text-nowrap">
-                <a href="row_edit.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&rowid=<?= urlencode((string) $rowid) ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                <form method="post" action="row_delete.php" style="display:inline" onsubmit="return confirm('Delete this row?');">
+                <a href="row_edit.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&rowid=<?= urlencode((string) $rowid) ?>" class="btn btn-sm btn-outline-primary"><?= __('edit') ?></a>
+                <form method="post" action="row_delete.php" style="display:inline" onsubmit="return confirm(<?= h(json_encode(__('confirm_delete_row'))) ?>);">
                     <?= sqliteCsrfField() ?>
                     <input type="hidden" name="db" value="<?= h($currentDb) ?>">
                     <input type="hidden" name="table" value="<?= h($currentTable) ?>">
                     <input type="hidden" name="rowid" value="<?= h((string) $rowid) ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Del</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><?= __('delete') ?></button>
                 </form>
             </td>
         </tr>
@@ -116,7 +131,7 @@ $colNames = array_column($columns, 'name');
 <nav>
     <ul class="pagination pagination-sm">
         <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&sort=<?= urlencode($sortCol) ?>&dir=<?= $sortDir ?>&page=<?= $page - 1 ?>">Prev</a>
+            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&sort=<?= urlencode($sortCol) ?>&dir=<?= $sortDir ?>&page=<?= $page - 1 ?>"><?= __('prev') ?></a>
         </li>
 <?php for ($i = max(1, $page - 3); $i <= min($totalPages, $page + 3); $i++): ?>
         <li class="page-item <?= $i === $page ? 'active' : '' ?>">
@@ -124,7 +139,7 @@ $colNames = array_column($columns, 'name');
         </li>
 <?php endfor; ?>
         <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
-            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&sort=<?= urlencode($sortCol) ?>&dir=<?= $sortDir ?>&page=<?= $page + 1 ?>">Next</a>
+            <a class="page-link" href="?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>&sort=<?= urlencode($sortCol) ?>&dir=<?= $sortDir ?>&page=<?= $page + 1 ?>"><?= __('next') ?></a>
         </li>
     </ul>
 </nav>

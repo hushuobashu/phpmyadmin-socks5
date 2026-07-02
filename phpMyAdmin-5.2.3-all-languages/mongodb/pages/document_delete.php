@@ -32,7 +32,7 @@ try {
     }
 
     $conn->deleteOne($db, $col, $filter);
-    mongoFlash('Document deleted.');
+    mongoFlash(__('document_deleted'));
 } catch (Exception $e) {
     mongoFlash($e->getMessage(), 'danger');
 }

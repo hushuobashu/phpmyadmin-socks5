@@ -36,7 +36,7 @@ if ($mode !== 'insert' && $rowid !== '' && empty($error)) {
         if (!empty($rows)) {
             $rowData = $rows[0];
         } else {
-            $error = 'Row not found.';
+            $error = __('row_not_found');
         }
     } catch (\Exception $e) {
         $error = $e->getMessage();
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $sql = 'INSERT INTO ' . $quotedTable . ' (' . implode(', ', $quotedCols) . ') VALUES (' . implode(', ', $quotedVals) . ')';
             $driver->exec($currentDb, $sql);
-            sqliteFlash('Row inserted.');
+            sqliteFlash(__('row_inserted'));
         } else {
             $sets = [];
             foreach ($values as $col => $val) {
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $sql = 'UPDATE ' . $quotedTable . ' SET ' . implode(', ', $sets) . ' WHERE rowid = ' . (int) $rowid;
             $driver->exec($currentDb, $sql);
-            sqliteFlash('Row updated.');
+            sqliteFlash(__('row_updated'));
         }
 
         header('Location: browse.php?db=' . urlencode($currentDb) . '&table=' . urlencode($currentTable));
@@ -90,11 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = ($mode === 'insert' ? 'Insert' : 'Edit') . ' Row';
+$pageTitle = ($mode === 'insert' ? __('insert') : __('edit')) . ' - ' . $currentTable;
 require_once __DIR__ . '/../includes/layout_header.php';
 ?>
 
-<h4><?= $mode === 'insert' ? 'Insert Row' : 'Edit Row' ?> in <code><?= h($currentTable) ?></code></h4>
+<h4><?= $mode === 'insert' ? __('insert_row') : __('edit_row') ?> <code><?= h($currentTable) ?></code></h4>
 
 <?php if ($error): ?>
 <div class="alert alert-danger"><?= h($error) ?></div>
@@ -105,10 +105,10 @@ require_once __DIR__ . '/../includes/layout_header.php';
     <table class="table table-sm">
         <thead>
             <tr>
-                <th>Column</th>
-                <th>Type</th>
-                <th>Value</th>
-                <th>NULL</th>
+                <th><?= __('column') ?></th>
+                <th><?= __('type') ?></th>
+                <th><?= __('value') ?></th>
+                <th><?= __('null_val') ?></th>
             </tr>
         </thead>
         <tbody>
@@ -142,8 +142,8 @@ require_once __DIR__ . '/../includes/layout_header.php';
         </tbody>
     </table>
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary"><?= $mode === 'insert' ? 'Insert' : 'Save' ?></button>
-        <a href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary"><?= $mode === 'insert' ? __('insert') : __('save') ?></button>
+        <a href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>" class="btn btn-secondary"><?= __('cancel') ?></a>
     </div>
 </form>
 

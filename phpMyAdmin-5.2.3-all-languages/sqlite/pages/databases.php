@@ -7,7 +7,7 @@ sqliteRequireLogin();
 
 $driver = sqliteGetDriver();
 $directories = sqliteGetDirectories();
-$pageTitle = 'Databases';
+$pageTitle = __('databases');
 
 // Handle create database
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST['action'] === 'create') {
@@ -17,15 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action']) && $_POST[
     $targetDir = $_POST['directory'] ?? '';
 
     if ($newName === '') {
-        sqliteFlash('Database name is required.', 'danger');
+        sqliteFlash(__('db_name_required'), 'danger');
     } elseif (!in_array($targetDir, $directories, true)) {
-        sqliteFlash('Invalid directory.', 'danger');
+        sqliteFlash(__('invalid_directory'), 'danger');
     } else {
         $dbPath = rtrim($targetDir, '/') . '/' . $newName;
 
         try {
             $driver->createDatabase($dbPath);
-            sqliteFlash('Database "' . $newName . '" created.');
+            sqliteFlash(__('db_created', $newName));
         } catch (\Exception $e) {
             sqliteFlash($e->getMessage(), 'danger');
         }
@@ -46,19 +46,19 @@ foreach ($directories as $dir) {
         }
         $allFiles = array_merge($allFiles, $files);
     } catch (\Exception $e) {
-        echo '<div class="alert alert-warning">Error scanning ' . h($dir) . ': ' . h($e->getMessage()) . '</div>';
+        echo '<div class="alert alert-warning">' . __('error_scanning', h($dir), h($e->getMessage())) . '</div>';
     }
 }
 ?>
 
-<h4>Databases</h4>
+<h4><?= __('databases') ?></h4>
 
 <!-- Create database form -->
 <form method="post" class="row g-2 mb-4">
     <?= sqliteCsrfField() ?>
     <input type="hidden" name="action" value="create">
     <div class="col-auto">
-        <input type="text" name="db_name" class="form-control form-control-sm" placeholder="New database name" required>
+        <input type="text" name="db_name" class="form-control form-control-sm" placeholder="<?= __('new_db_name') ?>" required>
     </div>
 <?php if (count($directories) > 1): ?>
     <div class="col-auto">
@@ -72,20 +72,20 @@ foreach ($directories as $dir) {
     <input type="hidden" name="directory" value="<?= h($directories[0] ?? '') ?>">
 <?php endif; ?>
     <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-success">Create Database</button>
+        <button type="submit" class="btn btn-sm btn-success"><?= __('create_database') ?></button>
     </div>
 </form>
 
 <?php if (empty($allFiles)): ?>
-    <div class="alert alert-info">No SQLite database files found in the configured directories.</div>
+    <div class="alert alert-info"><?= __('no_databases_found') ?></div>
 <?php else: ?>
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Path</th>
-            <th>Actions</th>
+            <th><?= __('name') ?></th>
+            <th><?= __('size') ?></th>
+            <th><?= __('path') ?></th>
+            <th><?= __('actions') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -99,9 +99,9 @@ foreach ($directories as $dir) {
             <td><?= formatBytes($file['size']) ?></td>
             <td><small class="text-muted"><?= h($file['directory']) ?></small></td>
             <td>
-                <a href="tables.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-primary">Browse</a>
-                <a href="query.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-info">Query</a>
-                <a href="export.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-success">Export</a>
+                <a href="tables.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-primary"><?= __('browse') ?></a>
+                <a href="query.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-info"><?= __('query') ?></a>
+                <a href="export.php?db=<?= urlencode($file['path']) ?>" class="btn btn-sm btn-outline-success"><?= __('export') ?></a>
             </td>
         </tr>
 <?php endforeach; ?>

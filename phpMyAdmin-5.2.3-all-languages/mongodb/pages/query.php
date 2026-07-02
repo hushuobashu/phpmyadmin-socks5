@@ -14,7 +14,7 @@ if (empty($currentDb) || empty($currentCol)) {
     exit;
 }
 
-$pageTitle = $currentCol . ' - Query';
+$pageTitle = $currentCol . ' - ' . __('query');
 $results = null;
 $error = '';
 $queryType = $_POST['type'] ?? ($_GET['type'] ?? 'find');
@@ -68,15 +68,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../includes/layout_header.php';
 ?>
 
-<h4>Query <code><?= h($currentCol) ?></code></h4>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link" href="documents.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('browse') ?></a></li>
+    <li class="nav-item"><a class="nav-link active" href="query.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('query') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="indexes.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('indexes') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="collection_stats.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('stats') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="export.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>"><?= __('export') ?></a></li>
+</ul>
+
+<h4><?= __('query_title') ?> <code><?= h($currentCol) ?></code></h4>
 
 <!-- Query type tabs -->
 <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item">
-        <a class="nav-link <?= $queryType === 'find' ? 'active' : '' ?>" href="#find-tab" data-bs-toggle="tab" onclick="document.getElementById('query-type').value='find'">Find</a>
+        <a class="nav-link <?= $queryType === 'find' ? 'active' : '' ?>" href="#find-tab" data-bs-toggle="tab" onclick="document.getElementById('query-type').value='find'"><?= __('find') ?></a>
     </li>
     <li class="nav-item">
-        <a class="nav-link <?= $queryType === 'aggregate' ? 'active' : '' ?>" href="#agg-tab" data-bs-toggle="tab" onclick="document.getElementById('query-type').value='aggregate'">Aggregate</a>
+        <a class="nav-link <?= $queryType === 'aggregate' ? 'active' : '' ?>" href="#agg-tab" data-bs-toggle="tab" onclick="document.getElementById('query-type').value='aggregate'"><?= __('aggregate') ?></a>
     </li>
 </ul>
 
@@ -92,27 +100,27 @@ require_once __DIR__ . '/../includes/layout_header.php';
         <div class="tab-pane <?= $queryType === 'find' ? 'show active' : '' ?>" id="find-tab">
             <div class="row mb-2">
                 <div class="col-md-12">
-                    <label class="form-label">Filter</label>
+                    <label class="form-label"><?= __('filter') ?></label>
                     <textarea name="filter" class="form-control form-control-sm font-monospace" rows="3"><?= h($filterJson) ?></textarea>
                 </div>
             </div>
             <div class="row mb-2">
                 <div class="col-md-6">
-                    <label class="form-label">Projection <small class="text-muted">(optional)</small></label>
+                    <label class="form-label"><?= __('projection') ?> <small class="text-muted">(<?= __('optional') ?>)</small></label>
                     <input type="text" name="projection" class="form-control form-control-sm font-monospace" value="<?= h($projectionJson) ?>" placeholder='{"field": 1}'>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Sort <small class="text-muted">(optional)</small></label>
+                    <label class="form-label"><?= __('sort') ?> <small class="text-muted">(<?= __('optional') ?>)</small></label>
                     <input type="text" name="sort" class="form-control form-control-sm font-monospace" value="<?= h($sortJson) ?>" placeholder='{"_id": -1}'>
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-3">
-                    <label class="form-label">Limit</label>
+                    <label class="form-label"><?= __('limit') ?></label>
                     <input type="number" name="limit" class="form-control form-control-sm" value="<?= $limit ?>">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Skip</label>
+                    <label class="form-label"><?= __('skip') ?></label>
                     <input type="number" name="skip" class="form-control form-control-sm" value="<?= $skip ?>">
                 </div>
             </div>
@@ -121,19 +129,19 @@ require_once __DIR__ . '/../includes/layout_header.php';
         <!-- Aggregate tab -->
         <div class="tab-pane <?= $queryType === 'aggregate' ? 'show active' : '' ?>" id="agg-tab">
             <div class="mb-3">
-                <label class="form-label">Pipeline (JSON array)</label>
+                <label class="form-label"><?= __('pipeline') ?></label>
                 <textarea name="pipeline" class="form-control font-monospace" rows="8"><?= h($pipelineJson) ?></textarea>
             </div>
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Execute</button>
-    <a href="export.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>" class="btn btn-outline-success">Export</a>
+    <button type="submit" class="btn btn-primary"><?= __('execute') ?></button>
+    <a href="export.php?db=<?= urlencode($currentDb) ?>&col=<?= urlencode($currentCol) ?>" class="btn btn-outline-success"><?= __('export') ?></a>
 </form>
 
 <?php if ($results !== null): ?>
 <hr>
-<p class="text-muted"><?= count($results) ?> document(s) returned</p>
+<p class="text-muted"><?= __('documents_returned', count($results)) ?></p>
 
 <?php if (!empty($results)): ?>
 <div class="table-responsive">

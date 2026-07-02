@@ -118,36 +118,53 @@ if ($doExport) {
     exit;
 }
 
-$pageTitle = ($currentTable ?: basename($currentDb)) . ' - Export';
+$pageTitle = ($currentTable ?: basename($currentDb)) . ' - ' . __('export');
 require_once __DIR__ . '/../includes/layout_header.php';
 ?>
 
-<h4>Export <code><?= h($currentTable ?: basename($currentDb)) ?></code></h4>
+<h4><?= __('export_title') ?> <code><?= h($currentTable ?: basename($currentDb)) ?></code></h4>
+
+<?php if ($currentTable): ?>
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link" href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('browse') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="structure.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('structure') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('query') ?></a></li>
+    <li class="nav-item"><a class="nav-link active" href="export.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('export') ?></a></li>
+    <li class="nav-item">
+        <form method="post" action="tables.php?db=<?= urlencode($currentDb) ?>" style="display:inline" onsubmit="return confirm(<?= h(json_encode(__('confirm_drop_table', $currentTable))) ?>);">
+            <?= sqliteCsrfField() ?>
+            <input type="hidden" name="action" value="drop">
+            <input type="hidden" name="table_name" value="<?= h($currentTable) ?>">
+            <button type="submit" class="nav-link text-danger"><?= __('drop') ?></button>
+        </form>
+    </li>
+</ul>
+<?php endif; ?>
 
 <form method="post">
 <?php if ($currentTable): ?>
     <input type="hidden" name="table" value="<?= h($currentTable) ?>">
 <?php endif; ?>
     <div class="mb-3">
-        <label class="form-label">Format</label>
+        <label class="form-label"><?= __('format') ?></label>
         <div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="format" value="sql" id="fmt-sql" checked>
-                <label class="form-check-label" for="fmt-sql">SQL Dump (CREATE + INSERT statements)</label>
+                <label class="form-check-label" for="fmt-sql"><?= __('sql_dump_label') ?></label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="format" value="csv" id="fmt-csv">
-                <label class="form-check-label" for="fmt-csv">CSV<?= $currentTable ? '' : ' (first table only)' ?></label>
+                <label class="form-check-label" for="fmt-csv"><?= __('csv_label') ?><?= $currentTable ? '' : ' ' . __('csv_first_table') ?></label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="format" value="download" id="fmt-download">
-                <label class="form-check-label" for="fmt-download">Download .db file</label>
+                <label class="form-check-label" for="fmt-download"><?= __('download_db') ?></label>
             </div>
         </div>
     </div>
-    <p class="text-muted">Max 10,000 rows per table for SQL/CSV exports.</p>
-    <button type="submit" name="export" value="1" class="btn btn-success">Export</button>
-    <a href="tables.php?db=<?= urlencode($currentDb) ?>" class="btn btn-secondary">Cancel</a>
+    <p class="text-muted"><?= __('max_export_rows') ?></p>
+    <button type="submit" name="export" value="1" class="btn btn-success"><?= __('export') ?></button>
+    <a href="tables.php?db=<?= urlencode($currentDb) ?>" class="btn btn-secondary"><?= __('cancel') ?></a>
 </form>
 
 <?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>

@@ -14,7 +14,7 @@ if (empty($currentDb) || empty($currentTable)) {
     exit;
 }
 
-$pageTitle = $currentTable . ' - Structure';
+$pageTitle = $currentTable . ' - ' . __('structure');
 require_once __DIR__ . '/../includes/layout_header.php';
 
 try {
@@ -30,19 +30,34 @@ try {
 }
 ?>
 
-<h4>Structure: <code><?= h($currentTable) ?></code></h4>
+<h4><?= __('structure_title') ?> <code><?= h($currentTable) ?></code></h4>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link" href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('browse') ?></a></li>
+    <li class="nav-item"><a class="nav-link active" href="structure.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('structure') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('query') ?></a></li>
+    <li class="nav-item"><a class="nav-link" href="export.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>"><?= __('export') ?></a></li>
+    <li class="nav-item">
+        <form method="post" action="tables.php?db=<?= urlencode($currentDb) ?>" style="display:inline" onsubmit="return confirm(<?= h(json_encode(__('confirm_drop_table', $currentTable))) ?>);">
+            <?= sqliteCsrfField() ?>
+            <input type="hidden" name="action" value="drop">
+            <input type="hidden" name="table_name" value="<?= h($currentTable) ?>">
+            <button type="submit" class="nav-link text-danger"><?= __('drop') ?></button>
+        </form>
+    </li>
+</ul>
 
 <!-- Columns -->
-<h5 class="mt-4">Columns</h5>
+<h5 class="mt-4"><?= __('columns') ?></h5>
 <table class="table table-striped table-sm">
     <thead>
         <tr>
             <th>#</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Not NULL</th>
-            <th>Default</th>
-            <th>PK</th>
+            <th><?= __('name') ?></th>
+            <th><?= __('type') ?></th>
+            <th><?= __('not_null') ?></th>
+            <th><?= __('default_val') ?></th>
+            <th><?= __('pk') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -51,9 +66,9 @@ try {
             <td><?= (int) $col['cid'] ?></td>
             <td><strong><?= h($col['name']) ?></strong></td>
             <td><?= h($col['type']) ?></td>
-            <td><?= $col['notnull'] ? 'YES' : '' ?></td>
+            <td><?= $col['notnull'] ? __('yes') : '' ?></td>
             <td><?= $col['dflt_value'] !== null ? h($col['dflt_value']) : '<span class="text-muted">NULL</span>' ?></td>
-            <td><?= $col['pk'] ? 'YES' : '' ?></td>
+            <td><?= $col['pk'] ? __('yes') : '' ?></td>
         </tr>
 <?php endforeach; ?>
     </tbody>
@@ -61,13 +76,13 @@ try {
 
 <!-- Indexes -->
 <?php if (!empty($indexes)): ?>
-<h5 class="mt-4">Indexes</h5>
+<h5 class="mt-4"><?= __('indexes') ?></h5>
 <table class="table table-striped table-sm">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Unique</th>
-            <th>Columns</th>
+            <th><?= __('name') ?></th>
+            <th><?= __('unique') ?></th>
+            <th><?= __('columns') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -82,7 +97,7 @@ try {
 ?>
         <tr>
             <td><?= h($idx['name']) ?></td>
-            <td><?= $idx['unique'] ? 'YES' : '' ?></td>
+            <td><?= $idx['unique'] ? __('yes') : '' ?></td>
             <td><?= h(implode(', ', $idxCols)) ?></td>
         </tr>
 <?php endforeach; ?>
@@ -92,13 +107,8 @@ try {
 
 <!-- CREATE statement -->
 <?php if (!empty($createSql) && !empty($createSql[0]['sql'])): ?>
-<h5 class="mt-4">CREATE Statement</h5>
+<h5 class="mt-4"><?= __('create_statement') ?></h5>
 <pre class="bg-light p-3 border rounded"><code><?= h($createSql[0]['sql']) ?></code></pre>
 <?php endif; ?>
-
-<div class="mt-3">
-    <a href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>" class="btn btn-sm btn-outline-primary">Browse Data</a>
-    <a href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($currentTable) ?>" class="btn btn-sm btn-outline-info">Query</a>
-</div>
 
 <?php require_once __DIR__ . '/../includes/layout_footer.php'; ?>

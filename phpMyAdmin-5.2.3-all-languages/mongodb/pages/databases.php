@@ -6,7 +6,7 @@ require_once __DIR__ . '/../includes/session.php';
 mongoRequireLogin();
 
 $conn = mongoGetConnection();
-$pageTitle = 'Databases';
+$pageTitle = __('databases');
 
 require_once __DIR__ . '/../includes/layout_header.php';
 
@@ -19,15 +19,15 @@ try {
 }
 ?>
 
-<h4>Databases</h4>
+<h4><?= __('databases') ?></h4>
 
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Collections</th>
-            <th>Actions</th>
+            <th><?= __('name') ?></th>
+            <th><?= __('size') ?></th>
+            <th><?= __('collections') ?></th>
+            <th><?= __('actions') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -44,10 +44,10 @@ try {
             </td>
             <td><?= formatBytes($dbSize) ?></td>
             <td>
-                <a href="collections.php?db=<?= urlencode($dbName) ?>" class="btn btn-sm btn-outline-primary">Browse</a>
+                <a href="collections.php?db=<?= urlencode($dbName) ?>" class="btn btn-sm btn-outline-primary"><?= __('browse') ?></a>
             </td>
             <td>
-                <a href="collections.php?db=<?= urlencode($dbName) ?>" class="btn btn-sm btn-outline-secondary">Collections</a>
+                <a href="collections.php?db=<?= urlencode($dbName) ?>" class="btn btn-sm btn-outline-secondary"><?= __('collections') ?></a>
             </td>
         </tr>
 <?php endforeach; ?>

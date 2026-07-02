@@ -29,3 +29,14 @@ $sqliteDefaults = [
 foreach ($sqliteServers as $idx => $srv) {
     $sqliteServers[$idx] = array_merge($sqliteDefaults, $srv);
 }
+
+// i18n
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('phpSqliteAdmin');
+    session_start();
+}
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'zh'], true)) {
+    $_SESSION['sqlite_lang'] = $_GET['lang'];
+}
+$GLOBALS['_sqlite_lang_code'] = $_SESSION['sqlite_lang'] ?? 'en';
+$GLOBALS['_lang'] = require SQLITE_ROOT . '/lang/' . $GLOBALS['_sqlite_lang_code'] . '.php';

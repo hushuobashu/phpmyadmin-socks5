@@ -33,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
         }
 
         if (empty($colDefs)) {
-            sqliteFlash('At least one column is required.', 'danger');
+            sqliteFlash(__('column_required'), 'danger');
         } else {
             $sql = 'CREATE TABLE "' . str_replace('"', '""', $tableName) . '" (' . implode(', ', $colDefs) . ')';
             try {
                 $driver->exec($currentDb, $sql);
-                sqliteFlash('Table "' . $tableName . '" created.');
+                sqliteFlash(__('table_created', $tableName));
             } catch (\Exception $e) {
                 sqliteFlash($e->getMessage(), 'danger');
             }
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
         $tableName = $_POST['table_name'];
         try {
             $driver->exec($currentDb, 'DROP TABLE "' . str_replace('"', '""', $tableName) . '"');
-            sqliteFlash('Table "' . $tableName . '" dropped.');
+            sqliteFlash(__('table_dropped', $tableName));
         } catch (\Exception $e) {
             sqliteFlash($e->getMessage(), 'danger');
         }
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['action'])) {
     exit;
 }
 
-$pageTitle = basename($currentDb) . ' - Tables';
+$pageTitle = basename($currentDb) . ' - ' . __('structure');
 require_once __DIR__ . '/../includes/layout_header.php';
 
 try {
@@ -70,13 +70,13 @@ try {
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>Tables in <code><?= h(basename($currentDb)) ?></code> <small class="text-muted fs-6"><?= h($currentDb) ?></small></h4>
+    <h4><?= __('tables_in') ?> <code><?= h(basename($currentDb)) ?></code> <small class="text-muted fs-6"><?= h($currentDb) ?></small></h4>
 </div>
 
 <!-- Create table form -->
 <div class="card mb-4">
     <div class="card-header">
-        <a data-bs-toggle="collapse" href="#createTableForm" class="text-decoration-none">Create Table</a>
+        <a data-bs-toggle="collapse" href="#createTableForm" class="text-decoration-none"><?= __('create_table') ?></a>
     </div>
     <div class="collapse" id="createTableForm">
         <div class="card-body">
@@ -84,13 +84,13 @@ try {
                 <?= sqliteCsrfField() ?>
                 <input type="hidden" name="action" value="create">
                 <div class="mb-3">
-                    <label class="form-label">Table name</label>
+                    <label class="form-label"><?= __('table_name') ?></label>
                     <input type="text" name="table_name" class="form-control form-control-sm" required>
                 </div>
                 <div id="column-defs">
                     <div class="row mb-2">
                         <div class="col-6">
-                            <input type="text" name="col_name[]" class="form-control form-control-sm" placeholder="Column name" required>
+                            <input type="text" name="col_name[]" class="form-control form-control-sm" placeholder="<?= __('column_name') ?>" required>
                         </div>
                         <div class="col-6">
                             <select name="col_type[]" class="form-select form-select-sm">
@@ -103,9 +103,9 @@ try {
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-secondary mb-3" onclick="addColumn()">+ Add Column</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary mb-3" onclick="addColumn()"><?= __('add_column') ?></button>
                 <div>
-                    <button type="submit" class="btn btn-sm btn-success">Create Table</button>
+                    <button type="submit" class="btn btn-sm btn-success"><?= __('create_table') ?></button>
                 </div>
             </form>
         </div>
@@ -115,9 +115,9 @@ try {
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Actions</th>
+            <th><?= __('name') ?></th>
+            <th><?= __('type') ?></th>
+            <th><?= __('actions') ?></th>
         </tr>
     </thead>
     <tbody>
@@ -130,23 +130,23 @@ try {
             </td>
             <td><span class="badge bg-secondary"><?= h($tbl['type']) ?></span></td>
             <td>
-                <a href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-primary">Browse</a>
-                <a href="structure.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-secondary">Structure</a>
-                <a href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-info">Query</a>
-                <a href="export.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-success">Export</a>
+                <a href="browse.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-primary"><?= __('browse') ?></a>
+                <a href="structure.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-secondary"><?= __('structure') ?></a>
+                <a href="query.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-info"><?= __('query') ?></a>
+                <a href="export.php?db=<?= urlencode($currentDb) ?>&table=<?= urlencode($tbl['name']) ?>" class="btn btn-sm btn-outline-success"><?= __('export') ?></a>
 <?php if ($tbl['type'] === 'table'): ?>
-                <form method="post" style="display:inline" onsubmit="return confirm('Drop table \'<?= h($tbl['name']) ?>\'?');">
+                <form method="post" style="display:inline" onsubmit="return confirm('<?= __('confirm_drop_table', h($tbl['name'])) ?>');">
                     <?= sqliteCsrfField() ?>
                     <input type="hidden" name="action" value="drop">
                     <input type="hidden" name="table_name" value="<?= h($tbl['name']) ?>">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Drop</button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><?= __('drop') ?></button>
                 </form>
 <?php endif; ?>
             </td>
         </tr>
 <?php endforeach; ?>
 <?php if (empty($tables)): ?>
-        <tr><td colspan="3" class="text-muted">No tables found.</td></tr>
+        <tr><td colspan="3" class="text-muted"><?= __('no_tables_found') ?></td></tr>
 <?php endif; ?>
     </tbody>
 </table>
